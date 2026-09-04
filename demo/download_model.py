@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
@@ -13,7 +14,8 @@ def main() -> None:
     TARGET.mkdir(parents=True, exist_ok=True)
     print(f"Downloading {MODEL_ID} once. Inference will run locally afterwards.")
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
-    model = AutoModelForCausalLM.from_pretrained(MODEL_ID)
+    model = AutoModelForCausalLM.from_pretrained(MODEL_ID, attn_implementation="sdpa", torch_dtype=torch.bfloat16,
+                                                 device_map="auto")
     tokenizer.save_pretrained(TARGET)
     model.save_pretrained(TARGET, safe_serialization=True)
     print(f"Local model ready: {TARGET}")
