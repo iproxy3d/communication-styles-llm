@@ -1,9 +1,14 @@
-Version: 1.1-windows-fix
+Version: 1.2-associative-memory
 
-Fixes:
-- SQLite connections are explicitly closed on every platform.
-- tests/test_demo.py supports direct execution from the project root.
+Changes:
+- Added persistent associative emotional memory in SQLite.
+- Added dictionary-backed entity extraction with pymorphy3 normalization.
+- Communication state now supports S_t = alpha*U_t + (1-alpha)*E_t + beta*A_t.
+- Associations are updated with A_{t+1}(q) = (1-eta)A_t(q) + eta*S_t.
+- Added CLI tracing, --show-memory, --reset-memory, --memory-demo and --no-memory.
+- Added tests for entity normalization and memory recall.
 
 Verification commands:
 python tests/test_demo.py
 python -m unittest discover -s tests -v
+python app.py --backend echo --memory-demo

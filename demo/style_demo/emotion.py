@@ -49,6 +49,32 @@ def mix_state(
     return normalize(mixed)
 
 
+
+def mix_state_with_memory(
+    user_state: Mapping[str, float],
+    agent_state: Mapping[str, float],
+    memory_state: Mapping[str, float],
+    alpha: float,
+    beta: float,
+) -> dict[str, float]:
+    """Mix current user, agent and associative-memory signals.
+
+    Memory is an additive bias. Unlike U_t and E_t, A_t is intentionally not
+    normalized before the mix: repeated encounters can therefore make an
+    association stronger.
+    """
+    if not 0.0 <= alpha <= 1.0:
+        raise ValueError("alpha must be in [0, 1]")
+    if beta < 0.0:
+        raise ValueError("beta must be >= 0")
+    mixed = {
+        name: alpha * float(user_state.get(name, 0.0))
+        + (1.0 - alpha) * float(agent_state.get(name, 0.0))
+        + beta * float(memory_state.get(name, 0.0))
+        for name in EMOTIONS
+    }
+    return normalize(mixed)
+
 def update_toy_agent_state(
     agent_state: Mapping[str, float],
     user_state: Mapping[str, float],

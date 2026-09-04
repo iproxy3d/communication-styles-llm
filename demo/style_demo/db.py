@@ -22,6 +22,21 @@ class Character:
     initial_state: dict[str, float]
 
 
+@dataclass(frozen=True)
+class MemoryEntity:
+    id: int
+    canonical: str
+    aliases: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class Association:
+    character_id: int
+    entity_id: int
+    vector: dict[str, float]
+    encounters: int
+
+
 class Repository:
     def __init__(self, path: str | Path) -> None:
         self.path = Path(path)
@@ -88,6 +103,101 @@ class Repository:
             raise KeyError(f"Unknown motivation level: {level}")
         return json.loads(row["microdialogue"]) if row["microdialogue"] else []
 
+    def list_memory_entities(self) -> list[MemoryEntity]:
+        with self.connect() as connection:
+            rows = connection.execute(
+                "SELECT id, canonical, aliases FROM memory_entities ORDER BY id"
+            ).fetchall()
+        return [
+            MemoryEntity(
+                id=int(row["id"]),
+                canonical=str(row["canonical"]),
+                aliases=tuple(json.loads(row["aliases"] or "[]")),
+            )
+            for row in rows
+        ]
+
+    def get_association(self, character_id: int, entity_id: int) -> Association | None:
+        with self.connect() as connection:
+            row = connection.execute(
+                """SELECT character_id, entity_id, vector, encounters
+                   FROM associative_memory
+                   WHERE character_id = ? AND entity_id = ?""",
+                (character_id, entity_id),
+            ).fetchone()
+        if row is None:
+            return None
+        return Association(
+            character_id=int(row["character_id"]),
+            entity_id=int(row["entity_id"]),
+            vector=json.loads(row["vector"]),
+            encounters=int(row["encounters"]),
+        )
+
+    def update_association(
+        self,
+        character_id: int,
+        entity_id: int,
+        state: dict[str, float],
+        eta: float,
+    ) -> Association:
+        if not 0.0 < eta <= 1.0:
+            raise ValueError("eta must be in (0, 1]")
+        current = self.get_association(character_id, entity_id)
+        old = current.vector if current is not None else {name: 0.0 for name in STYLE_FIELDS}
+        updated = {
+            name: (1.0 - eta) * float(old.get(name, 0.0))
+            + eta * float(state.get(name, 0.0))
+            for name in STYLE_FIELDS
+        }
+        encounters = (current.encounters if current is not None else 0) + 1
+        payload = json.dumps(updated, ensure_ascii=False)
+        with self.connect() as connection:
+            connection.execute(
+                """INSERT INTO associative_memory(character_id, entity_id, vector, encounters)
+                   VALUES (?, ?, ?, ?)
+                   ON CONFLICT(character_id, entity_id) DO UPDATE SET
+                       vector = excluded.vector,
+                       encounters = excluded.encounters""",
+                (character_id, entity_id, payload, encounters),
+            )
+            connection.commit()
+        return Association(character_id, entity_id, updated, encounters)
+
+    def list_associations(self, character_id: int) -> list[tuple[str, Association]]:
+        with self.connect() as connection:
+            rows = connection.execute(
+                """SELECT e.canonical, m.character_id, m.entity_id, m.vector, m.encounters
+                   FROM associative_memory AS m
+                   JOIN memory_entities AS e ON e.id = m.entity_id
+                   WHERE m.character_id = ?
+                   ORDER BY m.encounters DESC, e.canonical""",
+                (character_id,),
+            ).fetchall()
+        return [
+            (
+                str(row["canonical"]),
+                Association(
+                    character_id=int(row["character_id"]),
+                    entity_id=int(row["entity_id"]),
+                    vector=json.loads(row["vector"]),
+                    encounters=int(row["encounters"]),
+                ),
+            )
+            for row in rows
+        ]
+
+    def clear_associations(self, character_id: int | None = None) -> None:
+        with self.connect() as connection:
+            if character_id is None:
+                connection.execute("DELETE FROM associative_memory")
+            else:
+                connection.execute(
+                    "DELETE FROM associative_memory WHERE character_id = ?",
+                    (character_id,),
+                )
+            connection.commit()
+
     @staticmethod
     def _character(row: sqlite3.Row) -> Character:
         return Character(
@@ -114,9 +224,47 @@ def message(role: str, content: str) -> dict[str, str]:
     return {"role": role, "content": content}
 
 
+def _seed_memory_entities(connection: sqlite3.Connection) -> None:
+    entities = [
+        (1, "самолет", ["самолёт", "самолет"]),
+        (2, "рейс", ["рейс"]),
+        (3, "аэропорт", ["аэропорт"]),
+        (4, "иванов", ["иванов"]),
+        (5, "париж", ["париж"]),
+        (6, "билет", ["билет"]),
+    ]
+    connection.executemany(
+        "INSERT OR IGNORE INTO memory_entities(id, canonical, aliases) VALUES (?, ?, ?)",
+        [(entity_id, canonical, json.dumps(aliases, ensure_ascii=False)) for entity_id, canonical, aliases in entities],
+    )
+
+
+def _ensure_association_schema(path: Path) -> None:
+    with closing(sqlite3.connect(path)) as connection:
+        connection.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS memory_entities (
+                id INTEGER PRIMARY KEY,
+                canonical TEXT NOT NULL UNIQUE,
+                aliases TEXT NOT NULL DEFAULT '[]'
+            );
+            CREATE TABLE IF NOT EXISTS associative_memory (
+                character_id INTEGER NOT NULL REFERENCES characters(id),
+                entity_id INTEGER NOT NULL REFERENCES memory_entities(id),
+                vector TEXT NOT NULL,
+                encounters INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY(character_id, entity_id)
+            );
+            """
+        )
+        _seed_memory_entities(connection)
+        connection.commit()
+
+
 def initialize_database(path: str | Path, force: bool = False) -> None:
     db_path = Path(path)
     if db_path.exists() and not force:
+        _ensure_association_schema(db_path)
         return
     if db_path.exists():
         db_path.unlink()
@@ -148,6 +296,18 @@ def initialize_database(path: str | Path, force: bool = False) -> None:
                 level INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
                 microdialogue TEXT
+            );
+            CREATE TABLE memory_entities (
+                id INTEGER PRIMARY KEY,
+                canonical TEXT NOT NULL UNIQUE,
+                aliases TEXT NOT NULL DEFAULT '[]'
+            );
+            CREATE TABLE associative_memory (
+                character_id INTEGER NOT NULL REFERENCES characters(id),
+                entity_id INTEGER NOT NULL REFERENCES memory_entities(id),
+                vector TEXT NOT NULL,
+                encounters INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY(character_id, entity_id)
             );
             """
         )
@@ -259,4 +419,5 @@ def initialize_database(path: str | Path, force: bool = False) -> None:
                 for level, messages in motivation.items()
             ],
         )
+        _seed_memory_entities(connection)
         connection.commit()

@@ -25,7 +25,7 @@ class LocalTransformersLLM:
         dtype = torch.float16 if self.device.type == "cuda" else torch.float32
         self.tokenizer = AutoTokenizer.from_pretrained(path, local_files_only=True)
         self.model = AutoModelForCausalLM.from_pretrained(
-            path, local_files_only=True, torch_dtype=dtype
+            path, attn_implementation="sdpa", local_files_only=True, torch_dtype=dtype, device_map="auto"
         ).to(self.device)
         self.model.eval()
 
