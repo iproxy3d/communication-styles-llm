@@ -1,0 +1,9 @@
+Version: 1.1-windows-fix
+
+Fixes:
+- SQLite connections are explicitly closed on every platform.
+- tests/test_demo.py supports direct execution from the project root.
+
+Verification commands:
+python tests/test_demo.py
+python -m unittest discover -s tests -v

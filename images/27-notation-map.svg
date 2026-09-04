@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="980" viewBox="0 0 1700 980">
+<defs><style>.t{font-family:Arial,sans-serif;fill:#17233b}.h{font-size:42px;font-weight:700}.b{font-size:25px;font-weight:700}.s{font-size:20px}.c{font-size:16px;fill:#5d687a}.m{font-family:Georgia,serif;font-style:italic;font-size:34px;font-weight:700}</style><marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5674b9"/></marker></defs>
+<rect width="1700" height="980" fill="#f8faff"/><text x="850" y="62" text-anchor="middle" class="t h">КАРТА ОБОЗНАЧЕНИЙ ТЕХНИЧЕСКОЙ МОДЕЛИ</text><text x="850" y="102" text-anchor="middle" class="t c">t — текущий шаг диалога · все эмоциональные векторы приведены к общему n-мерному пространству</text>
+<rect x="55" y="155" width="470" height="510" rx="28" fill="#edf4ff" stroke="#5278c8" stroke-width="3"/><text x="290" y="210" text-anchor="middle" class="t b">СОСТОЯНИЯ · ВЕКТОРЫ ℝⁿ</text>
+<text x="95" y="275" class="t m">Uₜ</text><text x="180" y="272" class="t s">эмоции собеседника сейчас</text>
+<text x="95" y="350" class="t m">Eₜ</text><text x="180" y="347" class="t s">состояние и история агента</text>
+<text x="95" y="425" class="t m">A(x)</text><text x="220" y="422" class="t s">ассоциация с сущностью x</text>
+<text x="95" y="500" class="t m">Aₜ</text><text x="180" y="497" class="t s">активированный сигнал памяти</text>
+<text x="95" y="575" class="t m">Sₜ</text><text x="180" y="572" class="t s">состояние выбора поведения</text>
+<rect x="575" y="155" width="520" height="510" rx="28" fill="#fff5df" stroke="#d99a3b" stroke-width="3"/><text x="835" y="210" text-anchor="middle" class="t b">КОЭФФИЦИЕНТЫ · ЧИСЛА</text>
+<text x="620" y="275" class="t m">α</text><text x="690" y="272" class="t s">реактивность к собеседнику [0,1]</text>
+<text x="620" y="350" class="t m">β</text><text x="690" y="347" class="t s">сила влияния памяти, β ≥ 0</text>
+<text x="620" y="425" class="t m">η</text><text x="690" y="422" class="t s">скорость обучения ассоциаций</text>
+<text x="620" y="500" class="t m">γ</text><text x="690" y="497" class="t s">доля памяти, сохраняемая при затухании</text>
+<text x="620" y="575" class="t m">Iₜ</text><text x="690" y="572" class="t s">интенсивность стилевой вставки</text>
+<rect x="1145" y="155" width="500" height="510" rx="28" fill="#f4efff" stroke="#8564c7" stroke-width="3"/><text x="1395" y="210" text-anchor="middle" class="t b">КОНТЕКСТ · ТЕКСТОВЫЕ БЛОКИ</text>
+<text x="1190" y="275" class="t m">Hₜ</text><text x="1275" y="272" class="t s">реальная история</text>
+<text x="1190" y="350" class="t m">Mₜ</text><text x="1275" y="347" class="t s">коммуникационный микродиалог</text>
+<text x="1190" y="425" class="t m">Qₜ</text><text x="1275" y="422" class="t s">мотивационный микродиалог</text>
+<text x="1190" y="500" class="t m">Xₜ</text><text x="1275" y="497" class="t s">текущее сообщение</text>
+<text x="1190" y="575" class="t m">Yₜ</text><text x="1275" y="572" class="t s">ответ агента</text>
+<rect x="140" y="735" width="1420" height="165" rx="30" fill="#fff" stroke="#d5ddea" stroke-width="3"/><text x="850" y="785" text-anchor="middle" class="t b">ДВЕ ОПЕРАЦИИ НЕЛЬЗЯ ПУТАТЬ</text><text x="465" y="845" text-anchor="middle" class="t s">αUₜ + (1−α)Eₜ + βAₜ</text><text x="465" y="875" text-anchor="middle" class="t c">числовое смешение векторов</text><path d="M700 835h110" stroke="#5674b9" stroke-width="5" marker-end="url(#a)"/><text x="1200" y="845" text-anchor="middle" class="t s">Hₜ ⊕ Mₜ ⊕ Qₜ ⊕ Xₜ</text><text x="1200" y="875" text-anchor="middle" class="t c">последовательная сборка текста контекста</text>
+</svg>
