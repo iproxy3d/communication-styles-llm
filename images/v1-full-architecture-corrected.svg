@@ -6,8 +6,8 @@
 <text x="950.0" y="58" text-anchor="middle" class="t h">ПОЛНАЯ АРХИТЕКТУРА ОДНОГО ШАГА</text>
 <text x="950.0" y="94" text-anchor="middle" class="t c">Состояние, policy, коммуникационный и мотивационный слои, контекст LLM и обновление памяти</text>
 <rect x="35" y="125" width="420" height="115" rx="20" class="blue"/>
-<text x="245" y="165" text-anchor="middle" class="t b">1. REAL USER Xₜ</text>
-<text x="245" y="205" text-anchor="middle" class="t c">текст / речь</text>
+<text x="245" y="165" text-anchor="middle" class="t b">1. ВХОД Xₜ ДЛЯ АНАЛИЗА</text>
+<text x="245" y="205" text-anchor="middle" class="t c">ещё не в контексте LLM</text>
 <rect x="500" y="125" width="420" height="115" rx="20" class="pink"/>
 <text x="710" y="165" text-anchor="middle" class="t b">2. Uₜ</text>
 <text x="710" y="205" text-anchor="middle" class="t c">эмоции пользователя</text>
@@ -35,13 +35,14 @@
 <rect x="1445" y="505" width="390" height="230" rx="20" class="green"/>
 <text x="1640" y="545" text-anchor="middle" class="t b">8. MOTIVATION Qₜ</text>
 <text x="1480" y="595" text-anchor="start" class="t s">m = 0 → пусто</text>
-<text x="1480" y="635" text-anchor="start" class="t s">m ≠ 0 → HIDDEN USER → AI</text>
+<text x="1480" y="635" text-anchor="start" class="t s">m ≠ 0 → HIDDEN USER → HIDDEN AI</text>
 <text x="1480" y="690" text-anchor="start" class="t c">регулирует инициативность</text>
 <path d="M260 750 L650 820" class="line"/>
 <path d="M1640 750 L1250 820" class="line"/>
 <rect x="470" y="800" width="960" height="130" rx="20" class="card"/>
 <text x="950" y="842" text-anchor="middle" class="t b">9. СБОРКА КОНТЕКСТА</text>
-<text x="950" y="885" text-anchor="middle" class="t s">SYSTEM + Hₜ + Mₜ + Qₜ + REAL USER Xₜ</text>
+<text x="950" y="880" text-anchor="middle" class="t s">SYSTEM + Hₜ → Mₜ: HIDDEN USER → HIDDEN AI</text>
+<text x="950" y="910" text-anchor="middle" class="t s">→ Qₜ: HIDDEN USER → HIDDEN AI → REAL USER Xₜ → LLM</text>
 <path d="M950 945 L950 995" class="line"/>
 <rect x="690" y="990" width="520" height="62" rx="20" class="green"/>
 <text x="950" y="1030" text-anchor="middle" class="t b">10. LLM → AI RESPONSE Yₜ</text>

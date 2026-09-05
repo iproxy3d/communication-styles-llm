@@ -4,15 +4,15 @@
 </style><marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5975bb"/></marker></defs>
 <rect width="1600" height="950" fill="#f8faff"/>
 <text x="800.0" y="58" text-anchor="middle" class="t h">ОДИН ДИАЛОГ — ДВА РАЗНЫХ ОТВЕТА</text>
-<text x="800.0" y="94" text-anchor="middle" class="t c">Предметная ситуация одинакова; меняется только локальный образец поведения</text>
+<text x="800.0" y="94" text-anchor="middle" class="t c">Xₜ сначала анализируется, а в контекст LLM добавляется только после скрытой пары</text>
 <rect x="300" y="125" width="1000" height="105" rx="20" class="blue"/>
 <text x="800" y="165" text-anchor="middle" class="t s">AI: «К сожалению, билетов на этот рейс нет»</text>
-<text x="800" y="205" text-anchor="middle" class="t b">REAL USER: «Тупица! Я опоздаю на самолёт!»</text>
+<text x="800" y="205" text-anchor="middle" class="t b">ВХОД Xₜ ДЛЯ АНАЛИЗА: «Тупица! Я опоздаю на самолёт!»</text>
 <rect x="55" y="285" width="710" height="510" rx="20" class="blue"/>
 <text x="410" y="330" text-anchor="middle" class="t b">БЕЗ МИКРОДИАЛОГА</text>
 <rect x="835" y="285" width="710" height="510" rx="20" class="pink"/>
 <text x="1190" y="330" text-anchor="middle" class="t b">С МИКРОДИАЛОГОМ</text>
-<text x="105" y="395" text-anchor="start" class="t s">Реальная история + REAL USER</text>
+<text x="105" y="395" text-anchor="start" class="t s">Реальная история Hₜ → REAL USER Xₜ</text>
 <path d="M410 425 L410 500" class="line"/>
 <rect x="235" y="515" width="350" height="85" rx="20" class="blue"/>
 <text x="410" y="565" text-anchor="middle" class="t b">LLM</text>
@@ -27,6 +27,7 @@
 <rect x="885" y="530" width="610" height="78" rx="20" class="blue"/>
 <text x="905" y="560" text-anchor="start" class="t tiny">REAL USER</text>
 <text x="905" y="590" text-anchor="start" class="t s">«Тупица! Я опоздаю на самолёт!»</text>
+<text x="1190" y="645" text-anchor="middle" class="t b">→ LLM</text>
 <path d="M1190 615 L1190 675" class="line"/>
 <rect x="900" y="690" width="580" height="75" rx="20" class="green"/>
 <text x="1190" y="725" text-anchor="middle" class="t s">«Давайте без оскорблений.</text>
