@@ -1,0 +1,237 @@
+From 7be3b836b0e7f22f76f4bbc5ddcd29a67f913160 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Sat, 5 Sep 2026 21:44:09 +0200
+Subject: [PATCH 2/2] =?UTF-8?q?=D0=A3=D1=82=D0=BE=D1=87=D0=BD=D0=B8=D1=82?=
+ =?UTF-8?q?=D1=8C=20=D0=BF=D0=BE=D1=80=D1=8F=D0=B4=D0=BE=D0=BA=20=D0=BC?=
+ =?UTF-8?q?=D0=B8=D0=BA=D1=80=D0=BE=D0=B4=D0=B8=D0=B0=D0=BB=D0=BE=D0=B3?=
+ =?UTF-8?q?=D0=BE=D0=B2=20=D0=BD=D0=B0=20=D1=81=D1=85=D0=B5=D0=BC=D0=B0?=
+ =?UTF-8?q?=D1=85?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ images/19-character-workshop-corrected.svg    |  2 +-
+ images/21-alpha-worked-example-corrected.svg  |  8 +--
+ images/v1-full-architecture-corrected.svg     | 11 ++--
+ images/v1-how-styles-work-corrected.svg       |  7 ++-
+ images/v1-intensity-corrected.svg             | 62 ++++++++++---------
+ .../v1-one-dialog-two-answers-corrected.svg   |  9 +--
+ 6 files changed, 53 insertions(+), 46 deletions(-)
+
+diff --git a/images/19-character-workshop-corrected.svg b/images/19-character-workshop-corrected.svg
+index 232cc60..8c4ce46 100644
+--- a/images/19-character-workshop-corrected.svg
++++ b/images/19-character-workshop-corrected.svg
+@@ -3,4 +3,4 @@
+ <rect x="435" y="160" width="340" height="280" rx="24" class="card"/><text x="605" y="215" text-anchor="middle" class="t b">2. Оси манеры</text><text x="470" y="270" class="t s">Формальность: 70%</text><text x="470" y="315" class="t s">Эмпатия: 80%</text><text x="470" y="360" class="t s">Прямота: 55%</text><text x="470" y="405" class="t s">Экспрессивность: 25%</text>
+ <rect x="805" y="160" width="340" height="280" rx="24" class="card"/><text x="975" y="215" text-anchor="middle" class="t b">3. Реакции</text><text x="840" y="270" class="t s">Страх → успокоить</text><text x="840" y="315" class="t s">Злость → признать + граница</text><text x="840" y="360" class="t s">Радость → поддержать кратко</text><text x="840" y="405" class="t s">Нейтрально → без вставки</text>
+ <rect x="1175" y="160" width="360" height="280" rx="24" class="card"/><text x="1355" y="215" text-anchor="middle" class="t b">4. Проверка</text><text x="1210" y="270" class="t s">Сохранились ли факты?</text><text x="1210" y="315" class="t s">Узнаётся ли персонаж?</text><text x="1210" y="360" class="t s">Нет ли повторов фраз?</text><text x="1210" y="405" class="t s">Безопасна ли реакция?</text>
+-<rect x="120" y="520" width="1360" height="265" rx="28" fill="#fff" stroke="#79b9ab" stroke-width="3"/><text x="800" y="575" text-anchor="middle" class="t b">Из строки «Злость → признать эмоцию и обозначить границу» получается библиотека примеров</text><rect x="175" y="625" width="370" height="105" rx="18" fill="#eef8f6"/><text x="205" y="668" class="t s">USER: «Задел его тон?»</text><text x="205" y="704" class="t s">AI: «Да. Отвечу спокойно».</text><rect x="615" y="625" width="370" height="105" rx="18" fill="#eef8f6"/><text x="645" y="668" class="t s">USER: «Будешь спорить?»</text><text x="645" y="704" class="t s">AI: «Нет. Обозначу границу».</text><rect x="1055" y="625" width="370" height="105" rx="18" fill="#eef8f6"/><text x="1085" y="668" class="t s">USER: «Всё ещё поможешь?»</text><text x="1085" y="704" class="t s">AI: «Да, но без угроз».</text><text x="800" y="845" text-anchor="middle" class="t c">Каждый элемент библиотеки — полная скрытая пара USER → AI, а не готовый ответ реальному пользователю.</text></svg>
++<rect x="120" y="520" width="1360" height="265" rx="28" fill="#fff" stroke="#79b9ab" stroke-width="3"/><text x="800" y="575" text-anchor="middle" class="t b">Из строки «Злость → признать эмоцию и обозначить границу» получается библиотека примеров</text><rect x="175" y="625" width="370" height="105" rx="18" fill="#eef8f6"/><text x="205" y="668" class="t s">HIDDEN USER: «Задел его тон?»</text><text x="205" y="704" class="t s">HIDDEN AI: «Да. Отвечу спокойно».</text><rect x="615" y="625" width="370" height="105" rx="18" fill="#eef8f6"/><text x="645" y="668" class="t s">HIDDEN USER: «Будешь спорить?»</text><text x="645" y="704" class="t s">HIDDEN AI: «Нет. Обозначу границу».</text><rect x="1055" y="625" width="370" height="105" rx="18" fill="#eef8f6"/><text x="1085" y="668" class="t s">HIDDEN USER: «Всё ещё поможешь?»</text><text x="1085" y="704" class="t s">HIDDEN AI: «Да, но без угроз».</text><text x="800" y="845" text-anchor="middle" class="t c">Каждый элемент библиотеки — полная скрытая пара HIDDEN USER → HIDDEN AI, а не готовый ответ реальному пользователю.</text></svg>
+diff --git a/images/21-alpha-worked-example-corrected.svg b/images/21-alpha-worked-example-corrected.svg
+index 66f259e..b6e629c 100644
+--- a/images/21-alpha-worked-example-corrected.svg
++++ b/images/21-alpha-worked-example-corrected.svg
+@@ -1,5 +1,5 @@
+ <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900"><defs><style>.t{font-family:Arial,sans-serif;fill:#17233b}.h{font-size:42px;font-weight:700}.b{font-size:25px;font-weight:700}.s{font-size:19px}.c{font-size:17px;fill:#5d687a}.card{fill:#fff;stroke:#dbe3ee;stroke-width:2}</style></defs><rect width="1600" height="900" fill="#f7faff"/><text x="800" y="65" text-anchor="middle" class="t h">ОДНА СИТУАЦИЯ, ТРИ ЗНАЧЕНИЯ α</text><text x="800" y="105" text-anchor="middle" class="t c">Иллюстрация по одной координате «раздражение»: U = 0,80; E = 0,10; S = αU + (1−α)E.</text>
+-<rect x="70" y="145" width="1460" height="85" rx="20" fill="#edf4ff"/><text x="110" y="180" class="t b">Реальное сообщение:</text><text x="390" y="180" class="t s">«Тупица. Найди мне другой рейс».</text><text x="110" y="215" class="t c">Характер и бизнес-правила одинаковы; меняется только чувствительность к текущему эмоциональному сигналу.</text>
+-<rect x="70" y="270" width="455" height="520" rx="25" class="card"/><text x="297" y="325" text-anchor="middle" class="t b">α = 0,20 · устойчивый</text><text x="297" y="365" text-anchor="middle" class="t s">S = 0,24</text><text x="105" y="425" class="t c">Выбранный микродиалог</text><rect x="105" y="445" width="385" height="130" rx="16" fill="#eef8f6"/><text x="130" y="486" class="t s">User: «Я недоволен».</text><text x="130" y="528" class="t s">AI: «Давайте спокойно</text><text x="130" y="558" class="t s">найдём решение».</text><text x="105" y="630" class="t c">Получаемый ответ</text><text x="105" y="673" class="t s">«Проверю другие рейсы.</text><text x="105" y="705" class="t s">Уточните допустимое время».</text><text x="105" y="755" class="t c">Агент почти не перенимает тон.</text>
+-<rect x="572" y="270" width="455" height="520" rx="25" class="card"/><text x="799" y="325" text-anchor="middle" class="t b">α = 0,50 · баланс</text><text x="799" y="365" text-anchor="middle" class="t s">S = 0,45</text><text x="607" y="425" class="t c">Выбранный микродиалог</text><rect x="607" y="445" width="385" height="130" rx="16" fill="#fff4df"/><text x="632" y="486" class="t s">User: «Это раздражает».</text><text x="632" y="528" class="t s">AI: «Понимаю. Продолжим</text><text x="632" y="558" class="t s">без резкости».</text><text x="607" y="630" class="t c">Получаемый ответ</text><text x="607" y="673" class="t s">«Понимаю ваше раздражение.</text><text x="607" y="705" class="t s">Давайте без оскорблений».</text><text x="607" y="755" class="t c">Эмоция признана, характер сохранён.</text>
+-<rect x="1074" y="270" width="455" height="520" rx="25" class="card"/><text x="1301" y="325" text-anchor="middle" class="t b">α = 0,80 · реактивный</text><text x="1301" y="365" text-anchor="middle" class="t s">S = 0,66</text><text x="1109" y="425" class="t c">Выбранный микродиалог</text><rect x="1109" y="445" width="385" height="130" rx="16" fill="#fff0f4"/><text x="1134" y="486" class="t s">User: «Меня провоцируют».</text><text x="1134" y="528" class="t s">AI: «Стоп. Так со мной</text><text x="1134" y="558" class="t s">говорить не нужно».</text><text x="1109" y="630" class="t c">Получаемый ответ</text><text x="1109" y="673" class="t s">«Я помогу, но оскорбления</text><text x="1109" y="705" class="t s">неприемлемы».</text><text x="1109" y="755" class="t c">Текущий сигнал влияет сильнее.</text><text x="800" y="850" text-anchor="middle" class="t c">Пример порогов: S &lt; 0,35 — слабая реакция; 0,35–0,55 — умеренная; S &gt; 0,55 — выраженная. Реальные пороги калибруются.</text></svg>
++<rect x="70" y="145" width="1460" height="85" rx="20" fill="#edf4ff"/><text x="110" y="180" class="t b">Вход Xₜ для анализа:</text><text x="390" y="180" class="t s">«Тупица. Найди мне другой рейс».</text><text x="110" y="215" class="t c">Xₜ ещё не помещён в LLM-контекст: сначала выбирается скрытая пара, затем добавляется REAL USER Xₜ.</text>
++<rect x="70" y="270" width="455" height="520" rx="25" class="card"/><text x="297" y="325" text-anchor="middle" class="t b">α = 0,20 · устойчивый</text><text x="297" y="365" text-anchor="middle" class="t s">S = 0,24</text><text x="105" y="415" class="t c">Выбранный микродиалог</text><rect x="105" y="435" width="385" height="125" rx="16" fill="#eef8f6"/><text x="130" y="473" class="t tiny">HIDDEN USER: «Я недоволен».</text><text x="130" y="510" class="t tiny">HIDDEN AI: «Давайте спокойно</text><text x="130" y="538" class="t tiny">найдём решение».</text><text x="105" y="595" class="t b">→ REAL USER Xₜ → LLM</text><text x="105" y="630" class="t c">Получаемый ответ</text><text x="105" y="673" class="t s">«Проверю другие рейсы.</text><text x="105" y="705" class="t s">Уточните допустимое время».</text><text x="105" y="755" class="t c">Агент почти не перенимает тон.</text>
++<rect x="572" y="270" width="455" height="520" rx="25" class="card"/><text x="799" y="325" text-anchor="middle" class="t b">α = 0,50 · баланс</text><text x="799" y="365" text-anchor="middle" class="t s">S = 0,45</text><text x="607" y="415" class="t c">Выбранный микродиалог</text><rect x="607" y="435" width="385" height="125" rx="16" fill="#fff4df"/><text x="632" y="473" class="t tiny">HIDDEN USER: «Это раздражает».</text><text x="632" y="510" class="t tiny">HIDDEN AI: «Понимаю. Продолжим</text><text x="632" y="538" class="t tiny">без резкости».</text><text x="607" y="595" class="t b">→ REAL USER Xₜ → LLM</text><text x="607" y="630" class="t c">Получаемый ответ</text><text x="607" y="673" class="t s">«Понимаю ваше раздражение.</text><text x="607" y="705" class="t s">Давайте без оскорблений».</text><text x="607" y="755" class="t c">Эмоция признана, характер сохранён.</text>
++<rect x="1074" y="270" width="455" height="520" rx="25" class="card"/><text x="1301" y="325" text-anchor="middle" class="t b">α = 0,80 · реактивный</text><text x="1301" y="365" text-anchor="middle" class="t s">S = 0,66</text><text x="1109" y="415" class="t c">Выбранный микродиалог</text><rect x="1109" y="435" width="385" height="125" rx="16" fill="#fff0f4"/><text x="1134" y="473" class="t tiny">HIDDEN USER: «Меня провоцируют».</text><text x="1134" y="510" class="t tiny">HIDDEN AI: «Стоп. Так со мной</text><text x="1134" y="538" class="t tiny">говорить не нужно».</text><text x="1109" y="595" class="t b">→ REAL USER Xₜ → LLM</text><text x="1109" y="630" class="t c">Получаемый ответ</text><text x="1109" y="673" class="t s">«Я помогу, но оскорбления</text><text x="1109" y="705" class="t s">неприемлемы».</text><text x="1109" y="755" class="t c">Текущий сигнал влияет сильнее.</text><text x="800" y="850" text-anchor="middle" class="t c">Пример порогов: S &lt; 0,35 — слабая реакция; 0,35–0,55 — умеренная; S &gt; 0,55 — выраженная. Реальные пороги калибруются.</text></svg>
+diff --git a/images/v1-full-architecture-corrected.svg b/images/v1-full-architecture-corrected.svg
+index ea8a3bb..f7f2688 100644
+--- a/images/v1-full-architecture-corrected.svg
++++ b/images/v1-full-architecture-corrected.svg
+@@ -6,8 +6,8 @@
+ <text x="950.0" y="58" text-anchor="middle" class="t h">ПОЛНАЯ АРХИТЕКТУРА ОДНОГО ШАГА</text>
+ <text x="950.0" y="94" text-anchor="middle" class="t c">Состояние, policy, коммуникационный и мотивационный слои, контекст LLM и обновление памяти</text>
+ <rect x="35" y="125" width="420" height="115" rx="20" class="blue"/>
+-<text x="245" y="165" text-anchor="middle" class="t b">1. REAL USER Xₜ</text>
+-<text x="245" y="205" text-anchor="middle" class="t c">текст / речь</text>
++<text x="245" y="165" text-anchor="middle" class="t b">1. ВХОД Xₜ ДЛЯ АНАЛИЗА</text>
++<text x="245" y="205" text-anchor="middle" class="t c">ещё не в контексте LLM</text>
+ <rect x="500" y="125" width="420" height="115" rx="20" class="pink"/>
+ <text x="710" y="165" text-anchor="middle" class="t b">2. Uₜ</text>
+ <text x="710" y="205" text-anchor="middle" class="t c">эмоции пользователя</text>
+@@ -35,15 +35,16 @@
+ <rect x="1445" y="505" width="390" height="230" rx="20" class="green"/>
+ <text x="1640" y="545" text-anchor="middle" class="t b">8. MOTIVATION Qₜ</text>
+ <text x="1480" y="595" text-anchor="start" class="t s">m = 0 → пусто</text>
+-<text x="1480" y="635" text-anchor="start" class="t s">m ≠ 0 → HIDDEN USER → AI</text>
++<text x="1480" y="635" text-anchor="start" class="t s">m ≠ 0 → HIDDEN USER → HIDDEN AI</text>
+ <text x="1480" y="690" text-anchor="start" class="t c">регулирует инициативность</text>
+ <path d="M260 750 L650 820" class="line"/>
+ <path d="M1640 750 L1250 820" class="line"/>
+ <rect x="470" y="800" width="960" height="130" rx="20" class="card"/>
+ <text x="950" y="842" text-anchor="middle" class="t b">9. СБОРКА КОНТЕКСТА</text>
+-<text x="950" y="885" text-anchor="middle" class="t s">SYSTEM + Hₜ + Mₜ + Qₜ + REAL USER Xₜ</text>
++<text x="950" y="880" text-anchor="middle" class="t s">SYSTEM + Hₜ → Mₜ: HIDDEN USER → HIDDEN AI</text>
++<text x="950" y="910" text-anchor="middle" class="t s">→ Qₜ: HIDDEN USER → HIDDEN AI → REAL USER Xₜ → LLM</text>
+ <path d="M950 945 L950 995" class="line"/>
+ <rect x="690" y="990" width="520" height="62" rx="20" class="green"/>
+ <text x="950" y="1030" text-anchor="middle" class="t b">10. LLM → AI RESPONSE Yₜ</text>
+ <text x="80" y="1068" text-anchor="start" class="t s">После ответа: обновить Eₜ, A(x) через η и применить затухание γ</text>
+-</svg>
+\ No newline at end of file
++</svg>
+diff --git a/images/v1-how-styles-work-corrected.svg b/images/v1-how-styles-work-corrected.svg
+index d657d36..5a4cc61 100644
+--- a/images/v1-how-styles-work-corrected.svg
++++ b/images/v1-how-styles-work-corrected.svg
+@@ -6,8 +6,9 @@
+ <text x="900.0" y="58" text-anchor="middle" class="t h">КАК РАБОТАЮТ КОММУНИКАЦИОННЫЕ СТИЛИ</text>
+ <text x="900.0" y="94" text-anchor="middle" class="t c">Полный цикл одного шага: состояние → policy → библиотека → скрытая пара → реальный запрос</text>
+ <rect x="35" y="145" width="250" height="130" rx="20" class="blue"/>
+-<text x="160" y="188" text-anchor="middle" class="t b">1. REAL USER</text>
+-<text x="160" y="230" text-anchor="middle" class="t c">«Я боюсь опоздать»</text>
++<text x="160" y="188" text-anchor="middle" class="t b">1. ВХОД Xₜ</text>
++<text x="160" y="220" text-anchor="middle" class="t c">для анализа; ещё не</text>
++<text x="160" y="245" text-anchor="middle" class="t c">в контексте LLM</text>
+ <path d="M290 210 L320 210" class="line"/>
+ <rect x="325" y="145" width="250" height="130" rx="20" class="pink"/>
+ <text x="450" y="188" text-anchor="middle" class="t b">2. Uₜ</text>
+@@ -52,4 +53,4 @@
+ <rect x="85" y="835" width="1630" height="110" rx="20" class="purple"/>
+ <text x="900" y="880" text-anchor="middle" class="t b">9. После ответа: обновить Eₜ и память → на следующем шаге заново выбрать стиль и вариант</text>
+ <text x="900" y="920" text-anchor="middle" class="t s">Скрытые пары не добавляются в реальную историю Hₜ.</text>
+-</svg>
+\ No newline at end of file
++</svg>
+diff --git a/images/v1-intensity-corrected.svg b/images/v1-intensity-corrected.svg
+index 82762b2..9220946 100644
+--- a/images/v1-intensity-corrected.svg
++++ b/images/v1-intensity-corrected.svg
+@@ -4,55 +4,59 @@
+ </style><marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5975bb"/></marker></defs>
+ <rect width="1800" height="1050" fill="#f8faff"/>
+ <text x="900.0" y="58" text-anchor="middle" class="t h">ИНТЕНСИВНОСТЬ: ЧИСЛО ПОЛНЫХ СКРЫТЫХ ПАР k</text>
+-<text x="900.0" y="94" text-anchor="middle" class="t c">k считает пары USER → AI, а не отдельные сообщения</text>
++<text x="900.0" y="94" text-anchor="middle" class="t c">Во входе LLM скрытые пары всегда стоят перед REAL USER; k считает полные пары USER → AI</text>
+ <rect x="35" y="145" width="410" height="610" rx="20" class="card"/>
+ <text x="240" y="190" text-anchor="middle" class="t b">k = 0</text>
+ <text x="240" y="225" text-anchor="middle" class="t c">нет вставки</text>
+ <rect x="65" y="260" width="350" height="82" rx="20" class="blue"/>
+ <text x="240" y="295" text-anchor="middle" class="t tiny">REAL USER</text>
+ <text x="240" y="325" text-anchor="middle" class="t s">«Почему отменён мой рейс?»</text>
++<text x="240" y="650" text-anchor="middle" class="t b">→ LLM</text>
+ <text x="240" y="715" text-anchor="middle" class="t c">смысл: высокий · стиль: базовый</text>
+ <rect x="475" y="145" width="410" height="610" rx="20" class="card"/>
+ <text x="680" y="190" text-anchor="middle" class="t b">k = 1</text>
+ <text x="680" y="225" text-anchor="middle" class="t c">1 пара USER → AI</text>
+-<rect x="505" y="260" width="350" height="82" rx="20" class="blue"/>
+-<text x="680" y="295" text-anchor="middle" class="t tiny">REAL USER</text>
+-<text x="680" y="325" text-anchor="middle" class="t s">«Почему отменён мой рейс?»</text>
+-<rect x="505" y="365" width="350" height="90" rx="12" class="purple"/>
+-<text x="520" y="395" text-anchor="start" class="t tiny">Пара 1: HIDDEN USER</text>
+-<text x="520" y="420" text-anchor="start" class="t s">→ HIDDEN AI</text>
++<rect x="505" y="270" width="350" height="90" rx="12" class="purple"/>
++<text x="520" y="300" text-anchor="start" class="t tiny">Пара 1: HIDDEN USER</text>
++<text x="520" y="330" text-anchor="start" class="t s">→ HIDDEN AI</text>
++<rect x="505" y="390" width="350" height="82" rx="20" class="blue"/>
++<text x="680" y="425" text-anchor="middle" class="t tiny">REAL USER</text>
++<text x="680" y="455" text-anchor="middle" class="t s">«Почему отменён мой рейс?»</text>
++<text x="680" y="650" text-anchor="middle" class="t b">→ LLM</text>
+ <text x="680" y="715" text-anchor="middle" class="t c">слабое локальное смещение</text>
+ <rect x="915" y="145" width="410" height="610" rx="20" class="card"/>
+ <text x="1120" y="190" text-anchor="middle" class="t b">k = 2</text>
+ <text x="1120" y="225" text-anchor="middle" class="t c">2 согласованные пары</text>
+-<rect x="945" y="260" width="350" height="82" rx="20" class="blue"/>
+-<text x="1120" y="295" text-anchor="middle" class="t tiny">REAL USER</text>
+-<text x="1120" y="325" text-anchor="middle" class="t s">«Почему отменён мой рейс?»</text>
+-<rect x="945" y="365" width="350" height="90" rx="12" class="purple"/>
+-<text x="960" y="395" text-anchor="start" class="t tiny">Пара 1: HIDDEN USER</text>
+-<text x="960" y="420" text-anchor="start" class="t s">→ HIDDEN AI</text>
+-<rect x="945" y="470" width="350" height="90" rx="12" class="purple"/>
+-<text x="960" y="500" text-anchor="start" class="t tiny">Пара 2: HIDDEN USER</text>
+-<text x="960" y="525" text-anchor="start" class="t s">→ HIDDEN AI</text>
++<rect x="945" y="260" width="350" height="80" rx="12" class="purple"/>
++<text x="960" y="290" text-anchor="start" class="t tiny">Пара 1: HIDDEN USER</text>
++<text x="960" y="318" text-anchor="start" class="t s">→ HIDDEN AI</text>
++<rect x="945" y="350" width="350" height="80" rx="12" class="purple"/>
++<text x="960" y="380" text-anchor="start" class="t tiny">Пара 2: HIDDEN USER</text>
++<text x="960" y="408" text-anchor="start" class="t s">→ HIDDEN AI</text>
++<rect x="945" y="455" width="350" height="82" rx="20" class="blue"/>
++<text x="1120" y="490" text-anchor="middle" class="t tiny">REAL USER</text>
++<text x="1120" y="520" text-anchor="middle" class="t s">«Почему отменён мой рейс?»</text>
++<text x="1120" y="650" text-anchor="middle" class="t b">→ LLM</text>
+ <text x="1120" y="715" text-anchor="middle" class="t c">заметный стилевой маршрут</text>
+ <rect x="1355" y="145" width="410" height="610" rx="20" class="card"/>
+ <text x="1560" y="190" text-anchor="middle" class="t b">k = 3+</text>
+ <text x="1560" y="225" text-anchor="middle" class="t c">3 и более пар</text>
+-<rect x="1385" y="260" width="350" height="82" rx="20" class="blue"/>
+-<text x="1560" y="295" text-anchor="middle" class="t tiny">REAL USER</text>
+-<text x="1560" y="325" text-anchor="middle" class="t s">«Почему отменён мой рейс?»</text>
+-<rect x="1385" y="365" width="350" height="90" rx="12" class="purple"/>
+-<text x="1400" y="395" text-anchor="start" class="t tiny">Пара 1: HIDDEN USER</text>
+-<text x="1400" y="420" text-anchor="start" class="t s">→ HIDDEN AI</text>
+-<rect x="1385" y="470" width="350" height="90" rx="12" class="purple"/>
+-<text x="1400" y="500" text-anchor="start" class="t tiny">Пара 2: HIDDEN USER</text>
+-<text x="1400" y="525" text-anchor="start" class="t s">→ HIDDEN AI</text>
+-<rect x="1385" y="575" width="350" height="90" rx="12" class="purple"/>
+-<text x="1400" y="605" text-anchor="start" class="t tiny">Пара 3: HIDDEN USER</text>
+-<text x="1400" y="630" text-anchor="start" class="t s">→ HIDDEN AI</text>
++<rect x="1385" y="250" width="350" height="70" rx="12" class="purple"/>
++<text x="1400" y="278" text-anchor="start" class="t tiny">Пара 1: HIDDEN USER</text>
++<text x="1400" y="305" text-anchor="start" class="t s">→ HIDDEN AI</text>
++<rect x="1385" y="330" width="350" height="70" rx="12" class="purple"/>
++<text x="1400" y="358" text-anchor="start" class="t tiny">Пара 2: HIDDEN USER</text>
++<text x="1400" y="385" text-anchor="start" class="t s">→ HIDDEN AI</text>
++<rect x="1385" y="410" width="350" height="70" rx="12" class="purple"/>
++<text x="1400" y="438" text-anchor="start" class="t tiny">Пара 3: HIDDEN USER</text>
++<text x="1400" y="465" text-anchor="start" class="t s">→ HIDDEN AI</text>
++<rect x="1385" y="505" width="350" height="82" rx="20" class="blue"/>
++<text x="1560" y="540" text-anchor="middle" class="t tiny">REAL USER</text>
++<text x="1560" y="570" text-anchor="middle" class="t s">«Почему отменён мой рейс?»</text>
++<text x="1560" y="650" text-anchor="middle" class="t b">→ LLM</text>
+ <text x="1560" y="715" text-anchor="middle" class="t c">сильный эффект · риск вытеснения смысла</text>
+ <rect x="60" y="805" width="1680" height="155" rx="20" class="orange"/>
+ <text x="900" y="850" text-anchor="middle" class="t b">КОНЦЕПТУАЛЬНАЯ, НЕ ЛИНЕЙНАЯ ЗАВИСИМОСТЬ</text>
+ <text x="900" y="890" text-anchor="middle" class="t s">Intensity = f(k, длина, выразительность, близость к генерации, согласованность пар, конкретная LLM)</text>
+ <text x="900" y="930" text-anchor="middle" class="t s">Рост k обычно усиливает стиль, но эффект и потеря смысла должны измеряться экспериментально.</text>
+-</svg>
+\ No newline at end of file
++</svg>
+diff --git a/images/v1-one-dialog-two-answers-corrected.svg b/images/v1-one-dialog-two-answers-corrected.svg
+index bf96a63..836d082 100644
+--- a/images/v1-one-dialog-two-answers-corrected.svg
++++ b/images/v1-one-dialog-two-answers-corrected.svg
+@@ -4,15 +4,15 @@
+ </style><marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5975bb"/></marker></defs>
+ <rect width="1600" height="950" fill="#f8faff"/>
+ <text x="800.0" y="58" text-anchor="middle" class="t h">ОДИН ДИАЛОГ — ДВА РАЗНЫХ ОТВЕТА</text>
+-<text x="800.0" y="94" text-anchor="middle" class="t c">Предметная ситуация одинакова; меняется только локальный образец поведения</text>
++<text x="800.0" y="94" text-anchor="middle" class="t c">Xₜ сначала анализируется, а в контекст LLM добавляется только после скрытой пары</text>
+ <rect x="300" y="125" width="1000" height="105" rx="20" class="blue"/>
+ <text x="800" y="165" text-anchor="middle" class="t s">AI: «К сожалению, билетов на этот рейс нет»</text>
+-<text x="800" y="205" text-anchor="middle" class="t b">REAL USER: «Тупица! Я опоздаю на самолёт!»</text>
++<text x="800" y="205" text-anchor="middle" class="t b">ВХОД Xₜ ДЛЯ АНАЛИЗА: «Тупица! Я опоздаю на самолёт!»</text>
+ <rect x="55" y="285" width="710" height="510" rx="20" class="blue"/>
+ <text x="410" y="330" text-anchor="middle" class="t b">БЕЗ МИКРОДИАЛОГА</text>
+ <rect x="835" y="285" width="710" height="510" rx="20" class="pink"/>
+ <text x="1190" y="330" text-anchor="middle" class="t b">С МИКРОДИАЛОГОМ</text>
+-<text x="105" y="395" text-anchor="start" class="t s">Реальная история + REAL USER</text>
++<text x="105" y="395" text-anchor="start" class="t s">Реальная история Hₜ → REAL USER Xₜ</text>
+ <path d="M410 425 L410 500" class="line"/>
+ <rect x="235" y="515" width="350" height="85" rx="20" class="blue"/>
+ <text x="410" y="565" text-anchor="middle" class="t b">LLM</text>
+@@ -27,9 +27,10 @@
+ <rect x="885" y="530" width="610" height="78" rx="20" class="blue"/>
+ <text x="905" y="560" text-anchor="start" class="t tiny">REAL USER</text>
+ <text x="905" y="590" text-anchor="start" class="t s">«Тупица! Я опоздаю на самолёт!»</text>
++<text x="1190" y="645" text-anchor="middle" class="t b">→ LLM</text>
+ <path d="M1190 615 L1190 675" class="line"/>
+ <rect x="900" y="690" width="580" height="75" rx="20" class="green"/>
+ <text x="1190" y="725" text-anchor="middle" class="t s">«Давайте без оскорблений.</text>
+ <text x="1190" y="752" text-anchor="middle" class="t s">Я всё равно помогу найти другой рейс»</text>
+ <text x="800" y="865" text-anchor="middle" class="t b">Микродиалог скрыт от пользователя и не записывается как его реальные слова.</text>
+-</svg>
+\ No newline at end of file
++</svg>
+-- 
+2.51.1
+
