@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1030" viewBox="0 0 1800 1030">
+<defs><style>
+.t{font-family:Arial,sans-serif;fill:#17233b}.h{font-size:38px;font-weight:800}.b{font-size:24px;font-weight:750}.s{font-size:19px}.c{font-size:16px;fill:#617087}.tiny{font-size:14px}.card{fill:#fff;stroke:#d7dfeb;stroke-width:2}.blue{fill:#edf4ff;stroke:#557fbb}.pink{fill:#fff0f4;stroke:#cf688b}.green{fill:#ecf8f2;stroke:#4c9c72}.orange{fill:#fff5df;stroke:#d99a3b}.purple{fill:#f3efff;stroke:#755bc2}.dash{stroke-dasharray:9 7}.line{fill:none;stroke:#5975bb;stroke-width:4;marker-end:url(#a)}
+</style><marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5975bb"/></marker></defs>
+<rect width="1800" height="1030" fill="#f8faff"/>
+<text x="900.0" y="58" text-anchor="middle" class="t h">КАК РАБОТАЮТ КОММУНИКАЦИОННЫЕ СТИЛИ</text>
+<text x="900.0" y="94" text-anchor="middle" class="t c">Полный цикл одного шага: состояние → policy → библиотека → скрытая пара → реальный запрос</text>
+<rect x="35" y="145" width="250" height="130" rx="20" class="blue"/>
+<text x="160" y="188" text-anchor="middle" class="t b">1. REAL USER</text>
+<text x="160" y="230" text-anchor="middle" class="t c">«Я боюсь опоздать»</text>
+<path d="M290 210 L320 210" class="line"/>
+<rect x="325" y="145" width="250" height="130" rx="20" class="pink"/>
+<text x="450" y="188" text-anchor="middle" class="t b">2. Uₜ</text>
+<text x="450" y="230" text-anchor="middle" class="t c">эмоции собеседника</text>
+<path d="M580 210 L610 210" class="line"/>
+<rect x="615" y="145" width="250" height="130" rx="20" class="green"/>
+<text x="740" y="188" text-anchor="middle" class="t b">3. Eₜ + Aₜ</text>
+<text x="740" y="230" text-anchor="middle" class="t c">состояние и память</text>
+<path d="M870 210 L900 210" class="line"/>
+<rect x="905" y="145" width="250" height="130" rx="20" class="orange"/>
+<text x="1030" y="188" text-anchor="middle" class="t b">4. Sₜ</text>
+<text x="1030" y="230" text-anchor="middle" class="t c">взвешенное состояние</text>
+<path d="M1160 210 L1190 210" class="line"/>
+<rect x="1195" y="145" width="250" height="130" rx="20" class="purple"/>
+<text x="1320" y="188" text-anchor="middle" class="t b">5. POLICY</text>
+<text x="1320" y="230" text-anchor="middle" class="t c">веса и перенаправление</text>
+<path d="M1450 210 L1480 210" class="line"/>
+<rect x="1485" y="145" width="250" height="130" rx="20" class="blue"/>
+<text x="1610" y="188" text-anchor="middle" class="t b">6. SELECTOR</text>
+<text x="1610" y="230" text-anchor="middle" class="t c">поле + вариант + k</text>
+<rect x="85" y="355" width="760" height="430" rx="20" class="card"/>
+<text x="465" y="400" text-anchor="middle" class="t b">7. БИБЛИОТЕКА СТИЛЯ</text>
+<text x="125" y="450" text-anchor="start" class="t s">Профиль: сдержанный сотрудник аэропорта</text>
+<text x="125" y="500" text-anchor="start" class="t s">Поле: fear / тревога</text>
+<text x="125" y="550" text-anchor="start" class="t s">Вариант 2 из нескольких нейтральных пар</text>
+<rect x="125" y="595" width="680" height="145" rx="20" class="purple"/>
+<text x="145" y="627" text-anchor="start" class="t tiny">HIDDEN USER</text>
+<text x="145" y="653" text-anchor="start" class="t s">«Ты волнуешься?»</text>
+<text x="145" y="689" text-anchor="start" class="t tiny">HIDDEN AI</text>
+<text x="145" y="715" text-anchor="start" class="t s">«Да, но сначала спокойно проверю варианты»</text>
+<path d="M855 570 L955 570" class="line"/>
+<rect x="970" y="355" width="745" height="430" rx="20" class="card"/>
+<text x="1342" y="400" text-anchor="middle" class="t b">8. КОНТЕКСТ, ПЕРЕДАВАЕМЫЙ LLM</text>
+<text x="1010" y="450" text-anchor="start" class="t s">SYSTEM + реальная история Hₜ</text>
+<text x="1010" y="495" text-anchor="start" class="t s">+ HIDDEN USER</text>
+<text x="1010" y="535" text-anchor="start" class="t s">+ HIDDEN AI</text>
+<text x="1010" y="575" text-anchor="start" class="t s">+ мотивационная пара Qₜ (если m ≠ 0)</text>
+<text x="1010" y="615" text-anchor="start" class="t s">+ REAL USER Xₜ</text>
+<path d="M1342 650 L1342 690" class="line"/>
+<rect x="1160" y="700" width="365" height="62" rx="20" class="green"/>
+<text x="1342" y="740" text-anchor="middle" class="t b">LLM → AI RESPONSE Yₜ</text>
+<rect x="85" y="835" width="1630" height="110" rx="20" class="purple"/>
+<text x="900" y="880" text-anchor="middle" class="t b">9. После ответа: обновить Eₜ и память → на следующем шаге заново выбрать стиль и вариант</text>
+<text x="900" y="920" text-anchor="middle" class="t s">Скрытые пары не добавляются в реальную историю Hₜ.</text>
+</svg>

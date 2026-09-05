@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1750" height="980" viewBox="0 0 1750 980">
+<defs><style>
+.t{font-family:Arial,sans-serif;fill:#17233b}.h{font-size:38px;font-weight:800}.b{font-size:24px;font-weight:750}.s{font-size:19px}.c{font-size:16px;fill:#617087}.tiny{font-size:14px}.card{fill:#fff;stroke:#d7dfeb;stroke-width:2}.blue{fill:#edf4ff;stroke:#557fbb}.pink{fill:#fff0f4;stroke:#cf688b}.green{fill:#ecf8f2;stroke:#4c9c72}.orange{fill:#fff5df;stroke:#d99a3b}.purple{fill:#f3efff;stroke:#755bc2}.dash{stroke-dasharray:9 7}.line{fill:none;stroke:#5975bb;stroke-width:4;marker-end:url(#a)}
+</style><marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5975bb"/></marker></defs>
+<rect width="1750" height="980" fill="#f8faff"/>
+<text x="875.0" y="58" text-anchor="middle" class="t h">АССОЦИАТИВНАЯ ПАМЯТЬ АГЕНТА</text>
+<text x="875.0" y="94" text-anchor="middle" class="t c">Память хранит эмоциональные связи с сущностями; policy решает, как допустимо их выразить</text>
+<rect x="45" y="135" width="440" height="350" rx="20" class="blue"/>
+<text x="265" y="180" text-anchor="middle" class="t b">1. ИЗВЛЕЧЕНИЕ</text>
+<text x="85" y="240" text-anchor="start" class="t s">«Я снова встретил Иванова»</text>
+<text x="85" y="300" text-anchor="start" class="t b">entity: Иванов</text>
+<text x="85" y="360" text-anchor="start" class="t s">текущий Uₜ может быть нейтрален</text>
+<rect x="540" y="135" width="650" height="350" rx="20" class="purple"/>
+<text x="865" y="180" text-anchor="middle" class="t b">2. ХРАНИЛИЩЕ A(x)</text>
+<text x="590" y="245" text-anchor="start" class="t s">Иванов: anger 0.40 · annoyance 0.50 · sadness 0.10</text>
+<text x="590" y="300" text-anchor="start" class="t s">самолёт: fear 0.60 · sadness 0.50</text>
+<text x="590" y="355" text-anchor="start" class="t s">яблоко: joy 0.30</text>
+<text x="590" y="420" text-anchor="start" class="t c">Это предрасположенности, а не факты и не ответы.</text>
+<rect x="1245" y="135" width="460" height="350" rx="20" class="orange"/>
+<text x="1475" y="180" text-anchor="middle" class="t b">3. АКТИВАЦИЯ</text>
+<text x="1285" y="250" text-anchor="start" class="t s">Aₜ = Aggregate(A(Иванов), …)</text>
+<text x="1285" y="310" text-anchor="start" class="t s">Sₜ = αUₜ + (1−α)Eₜ + βAₜ</text>
+<text x="1285" y="370" text-anchor="start" class="t s">затем: policy → selector</text>
+<text x="1285" y="420" text-anchor="start" class="t s">→ скрытая пара → REAL USER</text>
+<path d="M490 310 L530 310" class="line"/>
+<path d="M1200 310 L1235 310" class="line"/>
+<rect x="120" y="570" width="1510" height="270" rx="20" class="card"/>
+<text x="875" y="615" text-anchor="middle" class="t b">4. ОБУЧЕНИЕ И ЗАТУХАНИЕ</text>
+<text x="185" y="680" text-anchor="start" class="t s">Новый опыт обновляет связь плавно:</text>
+<text x="185" y="725" text-anchor="start" class="t b">Aₜ₊₁(x) = Aₜ(x) + η(Eₜ − Aₜ(x))</text>
+<text x="935" y="680" text-anchor="start" class="t s">Старый опыт может затухать:</text>
+<text x="935" y="725" text-anchor="start" class="t b">A ← γA</text>
+<text x="185" y="790" text-anchor="start" class="t s">η — скорость обучения; γ близкое к 1 — медленное забывание.</text>
+</svg>

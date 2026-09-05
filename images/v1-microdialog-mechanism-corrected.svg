@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1030" viewBox="0 0 1700 1030">
+<defs><style>
+.t{font-family:Arial,sans-serif;fill:#17233b}.h{font-size:38px;font-weight:800}.b{font-size:24px;font-weight:750}.s{font-size:19px}.c{font-size:16px;fill:#617087}.tiny{font-size:14px}.card{fill:#fff;stroke:#d7dfeb;stroke-width:2}.blue{fill:#edf4ff;stroke:#557fbb}.pink{fill:#fff0f4;stroke:#cf688b}.green{fill:#ecf8f2;stroke:#4c9c72}.orange{fill:#fff5df;stroke:#d99a3b}.purple{fill:#f3efff;stroke:#755bc2}.dash{stroke-dasharray:9 7}.line{fill:none;stroke:#5975bb;stroke-width:4;marker-end:url(#a)}
+</style><marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5975bb"/></marker></defs>
+<rect width="1700" height="1030" fill="#f8faff"/>
+<text x="850.0" y="58" text-anchor="middle" class="t h">МИКРОДИАЛОГ: КАК РАБОТАЕТ МЕХАНИЗМ</text>
+<text x="850.0" y="94" text-anchor="middle" class="t c">Один реальный запрос — две траектории генерации; веса LLM не изменяются</text>
+<rect x="45" y="145" width="470" height="520" rx="20" class="card"/>
+<text x="280" y="185" text-anchor="middle" class="t b">1. БЕЗ ВСТАВКИ</text>
+<text x="75" y="235" text-anchor="start" class="t s">История: AI: «Билетов нет»</text>
+<text x="75" y="275" text-anchor="start" class="t s">REAL USER: «Тупица»</text>
+<path d="M280 310 L280 370" class="line"/>
+<rect x="120" y="385" width="320" height="90" rx="20" class="blue"/>
+<text x="280" y="440" text-anchor="middle" class="t b">LLM</text>
+<path d="M280 490 L280 545" class="line"/>
+<rect x="80" y="555" width="400" height="80" rx="20" class="green"/>
+<text x="280" y="603" text-anchor="middle" class="t b">Нейтральный ответ</text>
+<rect x="560" y="145" width="560" height="520" rx="20" class="card"/>
+<text x="840" y="185" text-anchor="middle" class="t b">2. С ДИНАМИЧЕСКОЙ ВСТАВКОЙ</text>
+<rect x="610" y="225" width="460" height="145" rx="20" class="purple"/>
+<text x="630" y="257" text-anchor="start" class="t tiny">HIDDEN USER</text>
+<text x="630" y="283" text-anchor="start" class="t s">«Тебя задел его тон?»</text>
+<text x="630" y="319" text-anchor="start" class="t tiny">HIDDEN AI</text>
+<text x="630" y="345" text-anchor="start" class="t s">«Да, но я спокойно обозначу границу»</text>
+<rect x="610" y="385" width="460" height="78" rx="20" class="blue"/>
+<text x="630" y="415" text-anchor="start" class="t tiny">REAL USER</text>
+<text x="630" y="445" text-anchor="start" class="t s">«Тупица»</text>
+<path d="M840 480 L840 540" class="line"/>
+<rect x="680" y="555" width="320" height="80" rx="20" class="green"/>
+<text x="840" y="590" text-anchor="middle" class="t b">LLM → направленный ответ</text>
+<text x="840" y="620" text-anchor="middle" class="t c">«Давайте без оскорблений и найдём рейс»</text>
+<rect x="1165" y="145" width="490" height="520" rx="20" class="card"/>
+<text x="1410" y="185" text-anchor="middle" class="t b">3. ЧТО ИЗМЕНИЛОСЬ</text>
+<text x="1200" y="245" text-anchor="start" class="t s">✓ предметный факт не изменился</text>
+<text x="1200" y="295" text-anchor="start" class="t s">✓ системные правила сохранены</text>
+<text x="1200" y="345" text-anchor="start" class="t s">✓ рядом с запросом появился образец</text>
+<text x="1200" y="395" text-anchor="start" class="t s">✓ изменились вероятности продолжения</text>
+<text x="1200" y="465" text-anchor="start" class="t s">На следующем шаге система может</text>
+<text x="1200" y="500" text-anchor="start" class="t s">выбрать другую скрытую пару.</text>
+<rect x="70" y="720" width="1560" height="220" rx="20" class="purple"/>
+<text x="850" y="765" text-anchor="middle" class="t b">SYSTEM И МИКРОДИАЛОГ НЕ КОНКУРИРУЮТ ПО РОЛИ</text>
+<text x="120" y="820" text-anchor="start" class="t s">SYSTEM: постоянная роль, безопасность, бизнес-правила</text>
+<text x="120" y="865" text-anchor="start" class="t s">HIDDEN USER → HIDDEN AI: свежий локальный образец формы поведения</text>
+<text x="120" y="910" text-anchor="start" class="t s">REAL USER: настоящий запрос, после которого LLM генерирует только следующий AI RESPONSE</text>
+</svg>
