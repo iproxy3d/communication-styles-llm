@@ -1,4 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900"><defs><style>.t{font-family:Arial,sans-serif;fill:#17233b}.h{font-size:42px;font-weight:700}.b{font-size:27px;font-weight:700}.s{font-size:22px}.c{font-size:18px;fill:#596679}.box{fill:#fff;stroke:#dce2ec;stroke-width:2}</style><marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7764c8"/></marker></defs><rect width="1600" height="900" fill="#faf8ff"/><text x="800" y="68" text-anchor="middle" class="t h" style="font-size:36px">АНАЛОГИЯ: ЭМОЦИОНАЛЬНЫЙ СИГНАЛ И КОНТРОЛЬ ПОВЕДЕНИЯ</text><text x="800" y="108" text-anchor="middle" class="t c">Это способ интуитивного объяснения, а не утверждение, что LLM устроена как мозг.</text>
-<text x="390" y="180" text-anchor="middle" class="t b">Человек — упрощённая аналогия</text><rect x="90" y="225" width="280" height="180" rx="24" fill="#fff0f4" stroke="#cf688b" stroke-width="3"/><text x="230" y="285" text-anchor="middle" class="t b">Эмоциональный фон</text><text x="230" y="330" text-anchor="middle" class="t s">быстрая реакция</text><text x="230" y="365" text-anchor="middle" class="t s">на ситуацию</text><path d="M385 315h95" stroke="#7764c8" stroke-width="5" marker-end="url(#a)"/><rect x="500" y="225" width="280" height="180" rx="24" fill="#eef5ff" stroke="#5681bd" stroke-width="3"/><text x="640" y="285" text-anchor="middle" class="t b">Контроль</text><text x="640" y="330" text-anchor="middle" class="t s">нормы, опыт,</text><text x="640" y="365" text-anchor="middle" class="t s">цель общения</text><path d="M640 420v95" stroke="#7764c8" stroke-width="5" marker-end="url(#a)"/><rect x="310" y="535" width="470" height="140" rx="24" class="box"/><text x="545" y="592" text-anchor="middle" class="t b">Выраженное поведение</text><text x="545" y="635" text-anchor="middle" class="t s">эмоция не равна поступку или фразе</text>
-<text x="1190" y="180" text-anchor="middle" class="t b">Агент — вычислительная реализация</text><rect x="850" y="225" width="280" height="180" rx="24" fill="#fff0f4" stroke="#cf688b" stroke-width="3"/><text x="990" y="280" text-anchor="middle" class="t b">Uₜ + Eₜ + Aₜ</text><text x="990" y="325" text-anchor="middle" class="t s">собеседник, состояние,</text><text x="990" y="360" text-anchor="middle" class="t s">ассоциации</text><path d="M1145 315h95" stroke="#7764c8" stroke-width="5" marker-end="url(#a)"/><rect x="1260" y="225" width="250" height="180" rx="24" fill="#eef5ff" stroke="#5681bd" stroke-width="3"/><text x="1385" y="280" text-anchor="middle" class="t b">Policy</text><text x="1385" y="325" text-anchor="middle" class="t s">характер, роль,</text><text x="1385" y="360" text-anchor="middle" class="t s">границы</text><path d="M1385 420v95" stroke="#7764c8" stroke-width="5" marker-end="url(#a)"/><rect x="850" y="535" width="660" height="140" rx="24" class="box"/><text x="1180" y="590" text-anchor="middle" class="t b">Микродиалог → контекст LLM → ответ</text><text x="1180" y="635" text-anchor="middle" class="t s">состояние превращается в наблюдаемый речевой образец</text>
-<rect x="210" y="755" width="1180" height="80" rx="22" fill="#eee9ff"/><text x="800" y="805" text-anchor="middle" class="t s">Полезная мысль аналогии: реакция возникает из состояния, но форму реакции задаёт устойчивый контроль.</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <style>.t{font-family:Arial,sans-serif;fill:#17233b}.h{font-size:38px;font-weight:700}.sh{font-size:25px;font-weight:700}.b{font-size:21px;font-weight:700}.s{font-size:18px}.xs{font-size:15px}.muted{fill:#647086}.box{fill:#fff;stroke:#d8e0eb;stroke-width:2}.dash{stroke:#8a78cc;stroke-width:3;stroke-dasharray:10 9;fill:none}.arr{stroke:#667dc1;stroke-width:4;fill:none}</style>
+    <marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#667dc1"/></marker>
+  </defs>
+  <rect width="1600" height="1000" fill="#faf9ff"/>
+  <text x="800" y="54" text-anchor="middle" class="t h">СОСТОЯНИЕ ПРЕДЛАГАЕТ РЕАКЦИЮ, КОНТРОЛЬ ЗАДАЁТ ФОРМУ</text>
+  <text x="800" y="91" text-anchor="middle" class="t s muted">Функциональная аналогия управления поведением — не схема устройства мозга и не утверждение, что LLM устроена как человек.</text>
+
+  <rect x="155" y="122" width="1290" height="78" rx="20" fill="#eee9ff"/>
+  <text x="800" y="153" text-anchor="middle" class="t b">Почему аналогия не случайна</text>
+  <text x="800" y="181" text-anchor="middle" class="t s">Тексты сохраняют наблюдаемые следы эмоций, памяти, социального контекста, планирования и речевого контроля.</text>
+
+  <text x="410" y="252" text-anchor="middle" class="t sh">Человек: взаимодействующие сети</text>
+  <text x="1190" y="252" text-anchor="middle" class="t sh">Агент: вычислительная модель</text>
+
+  <rect x="70" y="285" width="680" height="125" rx="22" fill="#fff0f4" stroke="#cc6b8a" stroke-width="3"/>
+  <text x="410" y="325" text-anchor="middle" class="t b">Аффективные и сигнальные системы</text>
+  <text x="410" y="356" text-anchor="middle" class="t s">оценивают значимость ситуации и формируют</text>
+  <text x="410" y="384" text-anchor="middle" class="t s">текущий эмоциональный фон</text>
+
+  <rect x="850" y="285" width="680" height="125" rx="22" fill="#fff0f4" stroke="#cc6b8a" stroke-width="3"/>
+  <text x="1190" y="325" text-anchor="middle" class="t b">Коммуникационное состояние Sₜ</text>
+  <text x="1190" y="356" text-anchor="middle" class="t s">собеседник + состояние агента + ассоциации</text>
+  <text x="1190" y="384" text-anchor="middle" class="t s">дают текущий аффективный сигнал</text>
+  <path d="M750 347h100" class="dash"/>
+
+  <path d="M410 425v45" class="arr" marker-end="url(#a)"/><path d="M1190 425v45" class="arr" marker-end="url(#a)"/>
+
+  <rect x="70" y="485" width="680" height="145" rx="22" fill="#eef5ff" stroke="#5681bd" stroke-width="3"/>
+  <text x="410" y="525" text-anchor="middle" class="t b">Оценка, память, планирование и контроль</text>
+  <text x="410" y="557" text-anchor="middle" class="t s">опыт, цели и социальные нормы ограничивают</text>
+  <text x="410" y="585" text-anchor="middle" class="t s">возможные способы реакции</text>
+  <text x="410" y="608" text-anchor="middle" class="t xs muted">Дофамин и стрессовые гормоны могут менять работу сетей,</text>
+  <text x="410" y="625" text-anchor="middle" class="t xs muted">но не являются простым переключателем.</text>
+
+  <rect x="850" y="485" width="680" height="145" rx="22" fill="#eef5ff" stroke="#5681bd" stroke-width="3"/>
+  <text x="1190" y="525" text-anchor="middle" class="t b">Веса характера W<tspan baseline-shift="sub" font-size="14">character</tspan></text>
+  <text x="1190" y="557" text-anchor="middle" class="t s">усиливают, ослабляют или запрещают реакции</text>
+  <text x="1190" y="585" text-anchor="middle" class="t s">и определяют доступное эмоциональное поле</text>
+  <text x="1190" y="612" text-anchor="middle" class="t xs muted">Это устойчивый поведенческий фильтр, а не модель лобной доли.</text>
+  <path d="M750 557h100" class="dash"/>
+
+  <path d="M410 645v45" class="arr" marker-end="url(#a)"/><path d="M1190 645v45" class="arr" marker-end="url(#a)"/>
+
+  <rect x="70" y="705" width="680" height="135" rx="22" fill="#eaf7ef" stroke="#3d9b68" stroke-width="3"/>
+  <text x="410" y="747" text-anchor="middle" class="t b">Выраженная речь и поведение</text>
+  <text x="410" y="779" text-anchor="middle" class="t s">эмоция не равна готовой фразе:</text>
+  <text x="410" y="807" text-anchor="middle" class="t s">её выражение зависит от контекста и контроля</text>
+
+  <rect x="850" y="705" width="680" height="135" rx="22" fill="#eaf7ef" stroke="#3d9b68" stroke-width="3"/>
+  <text x="1190" y="747" text-anchor="middle" class="t b">Микродиалог → сообщение → ответ</text>
+  <text x="1190" y="779" text-anchor="middle" class="t s">микродиалог показывает локальный образец</text>
+  <text x="1190" y="807" text-anchor="middle" class="t s">того, как выразить выбранную реакцию</text>
+  <path d="M750 772h100" class="dash"/>
+
+  <rect x="170" y="885" width="1260" height="72" rx="20" fill="#eee9ff"/>
+  <text x="800" y="914" text-anchor="middle" class="t b">Пунктир означает сходство функций, а не соответствие анатомических структур.</text>
+  <text x="800" y="942" text-anchor="middle" class="t s">Микродиалог — внешний локальный образец текста, а не биологическое внимание и не attention-слой трансформера.</text>
+</svg>
