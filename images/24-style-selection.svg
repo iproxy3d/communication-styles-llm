@@ -1,6 +1,74 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900"><defs><style>.t{font-family:Arial,sans-serif;fill:#17233b}.h{font-size:40px;font-weight:700}.b{font-size:24px;font-weight:700}.s{font-size:19px}.c{font-size:16px;fill:#5d687a}</style><marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5c72b6"/></marker></defs><rect width="1600" height="900" fill="#f8faff"/><text x="800" y="62" text-anchor="middle" class="t h">ВЫБОР И ВСТАВКА МИКРОДИАЛОГА НА ОДНОМ ШАГЕ</text><text x="800" y="100" text-anchor="middle" class="t c">Это один возможный способ реализации: таблица остаётся библиотекой, а селектор решает, какую ячейку использовать сейчас.</text>
-<rect x="55" y="175" width="280" height="245" rx="24" fill="#fff0f4" stroke="#cf688b" stroke-width="3"/><text x="195" y="230" text-anchor="middle" class="t b">Сигналы</text><text x="90" y="285" class="t s">Uₜ — собеседник</text><text x="90" y="325" class="t s">Eₜ — состояние агента</text><text x="90" y="365" class="t s">Aₜ — ассоциации</text><path d="M350 298h100" stroke="#5c72b6" stroke-width="5" marker-end="url(#a)"/>
-<rect x="470" y="190" width="280" height="215" rx="24" fill="#fff4df" stroke="#d69b43" stroke-width="3"/><text x="610" y="250" text-anchor="middle" class="t b">Состояние Sₜ</text><text x="610" y="305" text-anchor="middle" class="t s">полный вектор</text><text x="610" y="345" text-anchor="middle" class="t c">реактивность регулирует α</text><path d="M765 298h100" stroke="#5c72b6" stroke-width="5" marker-end="url(#a)"/>
-<rect x="885" y="150" width="310" height="295" rx="24" fill="#edf4ff" stroke="#557fbb" stroke-width="3"/><text x="1040" y="210" text-anchor="middle" class="t b">Селектор</text><text x="920" y="265" class="t s">1. выбрать стиль</text><text x="920" y="305" class="t s">2. учесть Sₜ</text><text x="920" y="345" class="t s">3. определить поле</text><text x="920" y="385" class="t s">4. задать интенсивность</text><path d="M1210 298h100" stroke="#5c72b6" stroke-width="5" marker-end="url(#a)"/>
-<rect x="1330" y="175" width="215" height="245" rx="24" fill="#f2edff" stroke="#7862c5" stroke-width="3"/><text x="1437" y="230" text-anchor="middle" class="t b">Ячейка</text><text x="1437" y="285" text-anchor="middle" class="t s">style × emotion</text><text x="1437" y="335" text-anchor="middle" class="t c">строковый текст</text><text x="1437" y="370" text-anchor="middle" class="t c">микродиалога</text><path d="M1437 435v90" stroke="#5c72b6" stroke-width="5" marker-end="url(#a)"/>
-<rect x="180" y="555" width="1240" height="135" rx="25" fill="#fff" stroke="#d9e2ec" stroke-width="3"/><text x="800" y="605" text-anchor="middle" class="t b">Реальная история + выбранный микродиалог + текущее сообщение пользователя</text><text x="800" y="650" text-anchor="middle" class="t c">Если состояние нейтральное или поле пустое, вставка может отсутствовать.</text><path d="M800 705v65" stroke="#5c72b6" stroke-width="5" marker-end="url(#a)"/><rect x="500" y="790" width="600" height="75" rx="20" fill="#eaf7ef" stroke="#4a9d76" stroke-width="3"/><text x="800" y="838" text-anchor="middle" class="t b">LLM генерирует ответ в выбранной манере</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1080" viewBox="0 0 1600 1080">
+  <defs>
+    <style>
+      .t{font-family:Arial,sans-serif;fill:#17233b}.h{font-size:39px;font-weight:700}.sh{font-size:25px;font-weight:700}.b{font-size:20px;font-weight:700}.s{font-size:18px}.xs{font-size:15px}.muted{fill:#667085}.card{fill:#fff;stroke:#d6dfec;stroke-width:2}.arrow{stroke:#5874bd;stroke-width:4;fill:none}.win{fill:#eaf7ef;stroke:#3c9b68;stroke-width:3}.disabled{fill:#f3f5f8;stroke:#cfd5df;stroke-width:2}</style>
+    <marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5874bd"/></marker>
+  </defs>
+  <rect width="1600" height="1080" fill="#f8faff"/>
+  <text x="800" y="55" text-anchor="middle" class="t h">КАК ХАРАКТЕР ВЫБИРАЕТ МИКРОДИАЛОГ</text>
+  <text x="800" y="91" text-anchor="middle" class="t s muted">Стиль задан заранее. На каждом шаге выбирается эмоциональное поле внутри этого стиля.</text>
+
+  <rect x="45" y="135" width="350" height="370" rx="24" class="card"/>
+  <text x="220" y="177" text-anchor="middle" class="t sh">1. Состояние S<tspan baseline-shift="sub" font-size="16">t</tspan></text>
+  <text x="75" y="215" class="t xs muted">Uₜ, Eₜ и Aₜ уже смешаны</text>
+  <rect x="75" y="242" width="290" height="50" rx="12" fill="#fff2c9"/><text x="95" y="274" class="t s">Радость</text><text x="340" y="274" text-anchor="end" class="t b">0,50</text>
+  <rect x="75" y="302" width="290" height="50" rx="12" fill="#eee9ff"/><text x="95" y="334" class="t s">Страх</text><text x="340" y="334" text-anchor="end" class="t b">0,80</text>
+  <rect x="75" y="362" width="290" height="50" rx="12" fill="#fff0e8"/><text x="95" y="394" class="t s">Раздражение</text><text x="340" y="394" text-anchor="end" class="t b">0,40</text>
+  <rect x="75" y="422" width="290" height="50" rx="12" fill="#ffe9ec"/><text x="95" y="454" class="t s">Гнев</text><text x="340" y="454" text-anchor="end" class="t b">0,30</text>
+
+  <text x="430" y="333" text-anchor="middle" class="t h">×</text>
+
+  <rect x="465" y="135" width="350" height="370" rx="24" class="card"/>
+  <text x="640" y="177" text-anchor="middle" class="t sh">2. Характер W<tspan baseline-shift="sub" font-size="16">character</tspan></text>
+  <text x="495" y="215" class="t xs muted">Постоянные веса реакций</text>
+  <rect x="495" y="242" width="290" height="50" rx="12" fill="#fff2c9"/><text x="515" y="274" class="t s">Радость</text><text x="760" y="274" text-anchor="end" class="t b">0,60</text>
+  <rect x="495" y="302" width="290" height="50" rx="12" fill="#eee9ff"/><text x="515" y="334" class="t s">Страх</text><text x="760" y="334" text-anchor="end" class="t b">0,40</text>
+  <rect x="495" y="362" width="290" height="50" rx="12" class="disabled"/><text x="515" y="394" class="t s muted">Раздражение</text><text x="760" y="394" text-anchor="end" class="t b muted">0</text>
+  <rect x="495" y="422" width="290" height="50" rx="12" class="disabled"/><text x="515" y="454" class="t s muted">Гнев</text><text x="760" y="454" text-anchor="end" class="t b muted">0</text>
+
+  <text x="850" y="333" text-anchor="middle" class="t h">=</text>
+
+  <rect x="885" y="135" width="350" height="370" rx="24" class="card"/>
+  <text x="1060" y="177" text-anchor="middle" class="t sh">3. Оценки R<tspan baseline-shift="sub" font-size="16">t</tspan></text>
+  <text x="915" y="215" class="t xs muted">Rₜ = Sₜ ⊙ W<tspan baseline-shift="sub" font-size="11">character</tspan></text>
+  <rect x="915" y="242" width="290" height="50" rx="12" fill="#fff2c9"/><text x="935" y="274" class="t s">Радость</text><text x="1180" y="274" text-anchor="end" class="t b">0,30</text>
+  <rect x="915" y="302" width="290" height="62" rx="12" class="win"/><text x="935" y="329" class="t b">Страх</text><text x="935" y="351" class="t xs" fill="#287b50">максимум</text><text x="1180" y="340" text-anchor="end" class="t b">0,32</text>
+  <rect x="915" y="374" width="290" height="45" rx="12" class="disabled"/><text x="935" y="403" class="t s muted">Раздражение</text><text x="1180" y="403" text-anchor="end" class="t b muted">0</text>
+  <rect x="915" y="429" width="290" height="45" rx="12" class="disabled"/><text x="935" y="458" class="t s muted">Гнев</text><text x="1180" y="458" text-anchor="end" class="t b muted">0</text>
+
+  <path d="M1248 322h60" class="arrow" marker-end="url(#a)"/>
+  <rect x="1320" y="205" width="235" height="245" rx="24" fill="#eef4ff" stroke="#5874bd" stroke-width="3"/>
+  <text x="1437" y="247" text-anchor="middle" class="t sh">4. Выбор поля</text>
+  <text x="1437" y="290" text-anchor="middle" class="t s">argmax(Rₜ)</text>
+  <rect x="1350" y="315" width="175" height="65" rx="16" class="win"/>
+  <text x="1437" y="355" text-anchor="middle" class="t sh">СТРАХ</text>
+  <text x="1437" y="414" text-anchor="middle" class="t xs muted">i* определяет столбец</text>
+
+  <rect x="55" y="550" width="650" height="205" rx="24" class="card"/>
+  <text x="85" y="592" class="t sh">5. Заданный стиль × выбранное поле</text>
+  <rect x="85" y="625" width="180" height="82" rx="14" fill="#edf4ff"/><text x="175" y="658" text-anchor="middle" class="t xs muted">Строка стиля</text><text x="175" y="690" text-anchor="middle" class="t b">Дружеский</text>
+  <text x="296" y="678" text-anchor="middle" class="t sh">×</text>
+  <rect x="325" y="625" width="150" height="82" rx="14" class="win"/><text x="400" y="658" text-anchor="middle" class="t xs muted">Столбец</text><text x="400" y="690" text-anchor="middle" class="t b">Страх</text>
+  <text x="505" y="678" text-anchor="middle" class="t sh">→</text>
+  <rect x="535" y="625" width="140" height="82" rx="14" fill="#eee9ff"/><text x="605" y="658" text-anchor="middle" class="t xs muted">Ячейка</text><text x="605" y="690" text-anchor="middle" class="t b">варианты</text>
+
+  <path d="M720 652h70" class="arrow" marker-end="url(#a)"/>
+  <rect x="805" y="550" width="740" height="205" rx="24" fill="#f2edff" stroke="#8064c7" stroke-width="3"/>
+  <text x="835" y="592" class="t sh">6. Микродиалог из ячейки</text>
+  <rect x="835" y="617" width="680" height="52" rx="13" fill="#fff"/><text x="855" y="650" class="t s"><tspan font-weight="700">Пользователь:</tspan> «Ты волнуешься?»</text>
+  <rect x="835" y="680" width="680" height="52" rx="13" fill="#eaf7ef"/><text x="855" y="713" class="t s"><tspan font-weight="700">Модель:</tspan> «Немного. Давай всё проверим вместе».</text>
+
+  <path d="M800 775v52" class="arrow" marker-end="url(#a)"/>
+  <rect x="80" y="845" width="1440" height="150" rx="24" class="card"/>
+  <text x="800" y="885" text-anchor="middle" class="t sh">7. Сборка контекста перед ответом</text>
+  <rect x="125" y="915" width="250" height="50" rx="13" fill="#edf4ff"/><text x="250" y="947" text-anchor="middle" class="t b">История</text>
+  <text x="410" y="949" text-anchor="middle" class="t sh">→</text>
+  <rect x="445" y="915" width="270" height="50" rx="13" fill="#eee9ff"/><text x="580" y="947" text-anchor="middle" class="t b">Микродиалог</text>
+  <text x="750" y="949" text-anchor="middle" class="t sh">→</text>
+  <rect x="785" y="915" width="330" height="50" rx="13" fill="#fff2c9"/><text x="950" y="947" text-anchor="middle" class="t b">Сообщение пользователя</text>
+  <text x="1150" y="949" text-anchor="middle" class="t sh">→</text>
+  <rect x="1185" y="915" width="270" height="50" rx="13" fill="#eaf7ef"/><text x="1320" y="947" text-anchor="middle" class="t b">Ответ модели</text>
+
+  <rect x="210" y="1020" width="1180" height="42" rx="14" fill="#eaf7ef"/>
+  <text x="800" y="1047" text-anchor="middle" class="t s">Характер усиливает, ослабляет или запрещает реакции; стиль персонажа остаётся заданным.</text>
+</svg>
