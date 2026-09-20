@@ -1,26 +1,48 @@
+from __future__ import annotations
+
 from pathlib import Path
 
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from huggingface_hub import snapshot_download
 
-MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
-TARGET = Path(__file__).parent / "models" / "qwen2.5-0.5b-instruct"
+ROOT = Path(__file__).resolve().parent
+
+GENERATION_MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
+GENERATION_TARGET = ROOT / "models" / "qwen2.5-0.5b-instruct"
+
+EMOTION_MODEL_ID = "proxy3d/multi-motions-28"
+EMOTION_TARGET = ROOT / "models" / "multi-motions-28"
+
+
+def download(repo_id: str, target: Path) -> None:
+    if (target / "config.json").exists() and any(
+        target.glob("*.safetensors")
+    ):
+        print(f"Already present: {repo_id} -> {target}")
+        return
+    target.mkdir(parents=True, exist_ok=True)
+    print(f"Downloading {repo_id} -> {target}")
+    snapshot_download(
+        repo_id=repo_id,
+        local_dir=target,
+        ignore_patterns=(
+            "*.md",
+            "*.html",
+            "*.bin",  # both releases provide safetensors
+            "docs/*",
+            "examples/*",
+            "training_*",
+            "trainer_*",
+            "evaluation*",
+            "native_ru_evaluation*",
+        ),
+    )
 
 
 def main() -> None:
-    if (TARGET / "config.json").exists():
-        print(f"Model already exists: {TARGET}")
-        return
-    TARGET.mkdir(parents=True, exist_ok=True)
-    print(f"Downloading {MODEL_ID} once. Inference will run locally afterwards.")
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
-    model = AutoModelForCausalLM.from_pretrained(MODEL_ID, attn_implementation="sdpa", torch_dtype=torch.bfloat16,
-                                                 device_map="auto")
-    tokenizer.save_pretrained(TARGET)
-    model.save_pretrained(TARGET, safe_serialization=True)
-    print(f"Local model ready: {TARGET}")
+    download(GENERATION_MODEL_ID, GENERATION_TARGET)
+    download(EMOTION_MODEL_ID, EMOTION_TARGET)
+    print("\nBoth models are ready. Runtime inference is local and uses no LLM API.")
 
 
 if __name__ == "__main__":
     main()
-

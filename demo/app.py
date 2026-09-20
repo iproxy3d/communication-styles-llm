@@ -5,17 +5,22 @@ from pathlib import Path
 
 from style_demo.db import Repository, initialize_database
 from style_demo.engine import Result, StyleDemo
+from style_demo.emotion_classifier import MultiMotions28Classifier
 from style_demo.local_llm import ContextEchoLLM, LocalTransformersLLM
 
 
 ROOT = Path(__file__).resolve().parent
 DB_PATH = ROOT / "db.sqlite3"
 MODEL_PATH = ROOT / "models" / "qwen2.5-0.5b-instruct"
+CLASSIFIER_PATH = ROOT / "models" / "multi-motions-28"
 DEFAULT_MESSAGE = "Я боюсь опоздать на рейс. Что мне делать?"
 
 
-def vector_text(vector: dict[str, float]) -> str:
-    return ", ".join(f"{key}={value:.2f}" for key, value in vector.items())
+def vector_text(vector: dict[str, float], limit: int = 8) -> str:
+    ranked = sorted(vector.items(), key=lambda item: item[1], reverse=True)
+    shown = ranked[:limit]
+    suffix = f", … ({len(vector)} dims)" if len(vector) > limit else ""
+    return ", ".join(f"{key}={value:.2f}" for key, value in shown) + suffix
 
 
 def print_messages(title: str, messages: list[dict[str, str]]) -> None:
@@ -67,9 +72,14 @@ def make_model(backend: str):
     return LocalTransformersLLM(MODEL_PATH)
 
 
+def make_classifier() -> MultiMotions28Classifier:
+    return MultiMotions28Classifier(CLASSIFIER_PATH)
+
+
 def make_demo(
     repository: Repository,
     model,
+    classifier,
     character_name: str,
     memory_beta: float,
     memory_eta: float,
@@ -77,6 +87,7 @@ def make_demo(
     return StyleDemo(
         repository,
         model,
+        classifier,
         repository.get_character(character_name),
         memory_beta=memory_beta,
         memory_eta=memory_eta,
@@ -86,6 +97,7 @@ def make_demo(
 def run_compare(
     repository: Repository,
     model,
+    classifier,
     text: str,
     show_context: bool,
     memory_beta: float,
@@ -95,6 +107,7 @@ def run_compare(
     baseline = StyleDemo(
         repository,
         model,
+        classifier,
         baseline_character,
         memory_beta=memory_beta,
         memory_eta=memory_eta,
@@ -110,6 +123,7 @@ def run_compare(
         result = StyleDemo(
             repository,
             model,
+            classifier,
             character,
             memory_beta=memory_beta,
             memory_eta=memory_eta,
@@ -124,13 +138,14 @@ def run_compare(
 def interactive(
     repository: Repository,
     model,
+    classifier,
     character_name: str,
     motivation: int | None,
     show_context: bool,
     memory_beta: float,
     memory_eta: float,
 ) -> None:
-    demo = make_demo(repository, model, character_name, memory_beta, memory_eta)
+    demo = make_demo(repository, model, classifier, character_name, memory_beta, memory_eta)
     print(f"Персонаж {demo.character.name}. Введите сообщение; /exit — завершить.")
     print("Ассоциативная память включена и сохраняется в db.sqlite3.")
     while True:
@@ -166,6 +181,7 @@ def print_memory(repository: Repository, character_name: str) -> None:
 def run_memory_demo(
     repository: Repository,
     model,
+    classifier,
     character_name: str,
     show_context: bool,
     memory_beta: float,
@@ -177,6 +193,7 @@ def run_memory_demo(
     demo = StyleDemo(
         repository,
         model,
+        classifier,
         character,
         memory_beta=memory_beta,
         memory_eta=memory_eta,
@@ -187,7 +204,7 @@ def run_memory_demo(
         "Самолетами я летать боюсь, каждый рейс вызывает тревогу.",
         "Перед рейсом в аэропорту я снова сильно волнуюсь из-за самолета.",
     ]
-    print("\n### ЭТАП 1. Формируем ассоциацию 'самолет -> страх' ###")
+    print("\n### ЭТАП 1. Формируем эмоциональную ассоциацию с сущностью 'самолет' ###")
     for text in training_turns:
         result = demo.respond(text, keep_history=False, learn_memory=True)
         print_result(character.name, result, show_context=False)
@@ -204,8 +221,8 @@ def run_memory_demo(
     )
     print_result(character.name, result, show_context)
     print(
-        "\nОбратите внимание: U_t у нейтральной фразы почти нейтрален, "
-        "но A_t добавляет ранее накопленную ассоциацию к S_t."
+        "\nСравните S_base и S_t: A_t добавляет ранее накопленный "
+        "эмоциональный профиль сущности к текущему состоянию выбора стиля."
     )
 
 
@@ -220,7 +237,7 @@ def main() -> None:
     parser.add_argument("--show-context", action="store_true", help="показать весь контекст для LLM")
     parser.add_argument("--show-memory", action="store_true", help="показать накопленные ассоциации персонажа и завершить")
     parser.add_argument("--reset-memory", action="store_true", help="очистить ассоциативную память выбранного персонажа")
-    parser.add_argument("--memory-demo", action="store_true", help="запустить сценарий самолет -> страх -> нейтральное повторное упоминание")
+    parser.add_argument("--memory-demo", action="store_true", help="запустить сценарий обучения эмоциональной ассоциации с самолетом и повторного упоминания")
     parser.add_argument("--memory-beta", type=float, default=0.35, help="beta: влияние A_t на S_t")
     parser.add_argument("--memory-eta", type=float, default=0.20, help="eta: скорость обновления A(entity)")
     parser.add_argument("--no-memory", action="store_true", help="отключить чтение и обучение ассоциативной памяти")
@@ -244,6 +261,7 @@ def main() -> None:
 
     try:
         model = make_model(args.backend)
+        classifier = make_classifier()
     except FileNotFoundError as error:
         parser.error(str(error))
 
@@ -251,6 +269,7 @@ def main() -> None:
         run_memory_demo(
             repository,
             model,
+            classifier,
             args.character,
             args.show_context,
             args.memory_beta,
@@ -260,6 +279,7 @@ def main() -> None:
         run_compare(
             repository,
             model,
+            classifier,
             args.message or DEFAULT_MESSAGE,
             args.show_context,
             args.memory_beta,
@@ -269,6 +289,7 @@ def main() -> None:
         demo = make_demo(
             repository,
             model,
+            classifier,
             args.character,
             args.memory_beta,
             args.memory_eta,
@@ -287,6 +308,7 @@ def main() -> None:
         interactive(
             repository,
             model,
+            classifier,
             args.character,
             args.motivation,
             args.show_context,

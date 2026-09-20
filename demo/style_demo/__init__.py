@@ -1,2 +1,1 @@
-"""Minimal local demonstration of communication styles through microdialogues."""
-
+"""Local communication-style demo with Multi-Motions 28 emotion input."""

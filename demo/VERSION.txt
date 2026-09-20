@@ -1,14 +1,17 @@
-Version: 1.2-associative-memory
+Version: 2.0-multi-motions-28
 
 Changes:
-- Added persistent associative emotional memory in SQLite.
-- Added dictionary-backed entity extraction with pymorphy3 normalization.
-- Communication state now supports S_t = alpha*U_t + (1-alpha)*E_t + beta*A_t.
-- Associations are updated with A_{t+1}(q) = (1-eta)A_t(q) + eta*S_t.
-- Added CLI tracing, --show-memory, --reset-memory, --memory-demo and --no-memory.
-- Added tests for entity normalization and memory recall.
+- Replaced the five-emotion keyword detector with proxy3d/multi-motions-28.
+- U_t is now the real 28-D sigmoid confidence vector from the EN/RU XLM-R classifier.
+- Expanded E_t, S_t and associative-memory vectors to all 28 GoEmotions coordinates.
+- Expanded SQLite communication_styles from 5 to all 28 classifier emotion fields.
+- Added default microdialogues for all 28 emotions, all three characters/styles, and intensities 0/1/2.
+- Standardized communication microdialogues as complete USER -> ASSISTANT pairs.
+- Added automatic migration from the old five-emotion SQLite schema.
+- download_model.py now downloads both Qwen2.5-0.5B-Instruct and Multi-Motions 28.
+- Unit tests use an offline deterministic classifier double and verify complete 28-emotion DB coverage.
 
-Verification commands:
-python tests/test_demo.py
+Verification:
 python -m unittest discover -s tests -v
-python app.py --backend echo --memory-demo
+python init_db.py --force
+python app.py --backend echo --message "Я боюсь опоздать на рейс" --show-context

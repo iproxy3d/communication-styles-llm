@@ -4,12 +4,8 @@ from dataclasses import dataclass
 
 from .association import EntityExtractor, EntityMatch, aggregate_memory
 from .db import Character, Repository
-from .emotion import (
-    detect_user_emotions,
-    mix_state,
-    mix_state_with_memory,
-    update_toy_agent_state,
-)
+from .emotion import mix_state, mix_state_with_memory, update_toy_agent_state
+from .emotion_classifier import EmotionClassifier
 from .local_llm import ChatModel
 
 
@@ -49,6 +45,7 @@ class StyleDemo:
         self,
         repository: Repository,
         model: ChatModel,
+        emotion_classifier: EmotionClassifier,
         character: Character,
         *,
         memory_beta: float = 0.35,
@@ -61,6 +58,7 @@ class StyleDemo:
             raise ValueError("memory_eta must be in (0, 1]")
         self.repository = repository
         self.model = model
+        self.emotion_classifier = emotion_classifier
         self.character = character
         self.memory_beta = memory_beta
         self.memory_eta = memory_eta
@@ -81,7 +79,7 @@ class StyleDemo:
         if learn_memory is None:
             learn_memory = keep_history
 
-        user_state = detect_user_emotions(user_text)
+        user_state = self.emotion_classifier.predict(user_text)
         base_communication_state = mix_state(
             user_state, self.agent_state, self.character.alpha
         )

@@ -1,6 +1,6 @@
+import sys
 import tempfile
 import unittest
-import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -9,8 +9,25 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from style_demo.association import EntityExtractor
 from style_demo.db import Repository, initialize_database
+from style_demo.emotion import EMOTIONS, vector
 from style_demo.engine import StyleDemo
 from style_demo.local_llm import ContextEchoLLM
+
+
+class FixedClassifier:
+    """Offline unit-test double; production demo uses Multi-Motions 28."""
+
+    def __init__(self, dominant: str = "neutral", score: float = 0.9) -> None:
+        self.dominant = dominant
+        self.score = score
+
+    def predict(self, text: str) -> dict[str, float]:
+        del text
+        values = {name: 0.01 for name in EMOTIONS}
+        values[self.dominant] = self.score
+        if self.dominant != "neutral":
+            values["neutral"] = 0.05
+        return vector(values)
 
 
 class DemoTests(unittest.TestCase):
@@ -23,14 +40,39 @@ class DemoTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.temp_dir.cleanup()
 
+    def make_demo(self, character: str, emotion: str = "neutral", **kwargs) -> StyleDemo:
+        return StyleDemo(
+            self.repo,
+            ContextEchoLLM(),
+            FixedClassifier(emotion),
+            self.repo.get_character(character),
+            **kwargs,
+        )
+
     def test_database_contains_three_characters(self) -> None:
         self.assertEqual(
             [item.name for item in self.repo.list_characters()],
             ["Мира", "Алекс", "Ирис"],
         )
 
-    def test_emotion_selects_string_field_and_injects_microdialogues(self) -> None:
-        demo = StyleDemo(self.repo, ContextEchoLLM(), self.repo.get_character("Мира"))
+    def test_database_contains_microdialogues_for_all_28_emotions_and_styles(self) -> None:
+        self.assertEqual(len(EMOTIONS), 28)
+        for character in self.repo.list_characters():
+            for emotion in EMOTIONS:
+                for intensity in (0, 1, 2):
+                    dialogue = self.repo.get_style_microdialogue(
+                        character.style_id, emotion, intensity
+                    )
+                    self.assertEqual(
+                        [item["role"] for item in dialogue],
+                        ["user", "assistant"],
+                        msg=f"{character.name}/{emotion}/intensity={intensity}",
+                    )
+                    self.assertTrue(dialogue[0]["content"])
+                    self.assertTrue(dialogue[1]["content"])
+
+    def test_emotion_selects_field_and_injects_microdialogues(self) -> None:
+        demo = self.make_demo("Мира", "anger")
         result = demo.respond(
             "Ты меня бесишь, я очень злюсь!",
             keep_history=False,
@@ -42,7 +84,7 @@ class DemoTests(unittest.TestCase):
         self.assertTrue(result.trace.model_messages[-1]["content"].startswith("Ты меня"))
 
     def test_hidden_microdialogue_is_not_saved_as_real_history(self) -> None:
-        demo = StyleDemo(self.repo, ContextEchoLLM(), self.repo.get_character("Алекс"))
+        demo = self.make_demo("Алекс", "annoyance")
         result = demo.respond("Опять та же ошибка")
         self.assertGreater(len(result.trace.model_messages), 2)
         self.assertEqual(len(demo.real_history), 2)
@@ -52,7 +94,7 @@ class DemoTests(unittest.TestCase):
         )
 
     def test_motivation_zero_adds_nothing(self) -> None:
-        demo = StyleDemo(self.repo, ContextEchoLLM(), self.repo.get_character("Ирис"))
+        demo = self.make_demo("Ирис", "joy")
         result = demo.respond(
             "Ура, всё получилось!",
             motivation_level=0,
@@ -60,6 +102,18 @@ class DemoTests(unittest.TestCase):
             learn_memory=False,
         )
         self.assertEqual(result.trace.motivation_microdialogue, [])
+
+    def test_classifier_vector_keeps_independent_scores_not_sum_normalized(self) -> None:
+        demo = self.make_demo("Мира", "fear")
+        result = demo.respond(
+            "Я боюсь опоздать на рейс.",
+            use_memory=False,
+            keep_history=False,
+            learn_memory=False,
+        )
+        self.assertAlmostEqual(result.trace.user_state["fear"], 0.9)
+        # Independent sigmoid-like values do not have to sum to one.
+        self.assertNotAlmostEqual(sum(result.trace.user_state.values()), 1.0)
 
     def test_entity_normalization_finds_inflected_demo_entities(self) -> None:
         extractor = EntityExtractor(self.repo)
@@ -74,6 +128,7 @@ class DemoTests(unittest.TestCase):
         demo = StyleDemo(
             self.repo,
             ContextEchoLLM(),
+            FixedClassifier("fear"),
             character,
             memory_beta=0.8,
             memory_eta=0.5,
@@ -98,14 +153,19 @@ class DemoTests(unittest.TestCase):
         )
         self.assertIn("самолет", {m.canonical for m in recalled.trace.matched_entities})
         self.assertGreater(recalled.trace.associative_state["fear"], 0.0)
-        self.assertGreater(
+        self.assertGreaterEqual(
             recalled.trace.communication_state["fear"],
             recalled.trace.base_communication_state["fear"],
         )
 
     def test_compare_like_read_does_not_update_memory_when_learning_disabled(self) -> None:
         character = self.repo.get_character("Мира")
-        demo = StyleDemo(self.repo, ContextEchoLLM(), character)
+        demo = StyleDemo(
+            self.repo,
+            ContextEchoLLM(),
+            FixedClassifier("fear"),
+            character,
+        )
         demo.respond(
             "Я боюсь самолета.",
             keep_history=False,

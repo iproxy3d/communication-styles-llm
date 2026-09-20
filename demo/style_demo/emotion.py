@@ -1,37 +1,55 @@
 from __future__ import annotations
 
-import re
 from collections.abc import Mapping
 
-EMOTIONS = ("neutral", "fear", "anger", "annoyance", "joy")
+# Exact GoEmotions-compatible output order used by proxy3d/multi-motions-28.
+EMOTIONS = (
+    "admiration",
+    "amusement",
+    "anger",
+    "annoyance",
+    "approval",
+    "caring",
+    "confusion",
+    "curiosity",
+    "desire",
+    "disappointment",
+    "disapproval",
+    "disgust",
+    "embarrassment",
+    "excitement",
+    "fear",
+    "gratitude",
+    "grief",
+    "joy",
+    "love",
+    "nervousness",
+    "optimism",
+    "pride",
+    "realization",
+    "relief",
+    "remorse",
+    "sadness",
+    "surprise",
+    "neutral",
+)
 
-_LEXICON: dict[str, tuple[str, ...]] = {
-    "fear": ("бою", "страш", "опас", "тревог", "волную", "паник"),
-    "anger": ("зл", "бесит", "ненавиж", "ярост", "тупиц", "идиот"),
-    "annoyance": ("раздраж", "надоел", "опять", "сколько можно", "достал"),
-    "joy": ("рад", "счаст", "отлично", "здорово", "ура", "спасибо"),
-}
 
+def vector(values: Mapping[str, float], *, clip: bool = True) -> dict[str, float]:
+    """Return a dense 28-D vector in classifier label order.
 
-def normalize(vector: Mapping[str, float]) -> dict[str, float]:
-    values = {name: max(0.0, float(vector.get(name, 0.0))) for name in EMOTIONS}
-    total = sum(values.values())
-    if total <= 0:
-        return {name: 1.0 if name == "neutral" else 0.0 for name in EMOTIONS}
-    return {name: value / total for name, value in values.items()}
-
-
-def detect_user_emotions(text: str) -> dict[str, float]:
-    """Tiny deterministic detector for the demo, not a production classifier."""
-    lowered = re.sub(r"\s+", " ", text.lower())
-    scores = {name: 0.0 for name in EMOTIONS}
-    for emotion, stems in _LEXICON.items():
-        scores[emotion] = sum(1.0 for stem in stems if stem in lowered)
-    if sum(scores.values()) == 0:
-        scores["neutral"] = 1.0
-    else:
-        scores["neutral"] = 0.08
-    return normalize(scores)
+    Multi-Motions 28 is multi-label: its sigmoid confidence scores are not a
+    categorical probability distribution and must *not* be renormalized to sum
+    to one.  This helper therefore only fills missing coordinates and, when
+    requested, clips values to the common [0, 1] scale.
+    """
+    result: dict[str, float] = {}
+    for name in EMOTIONS:
+        value = float(values.get(name, 0.0))
+        if clip:
+            value = max(0.0, min(1.0, value))
+        result[name] = value
+    return result
 
 
 def mix_state(
@@ -46,8 +64,7 @@ def mix_state(
         + (1.0 - alpha) * float(agent_state.get(name, 0.0))
         for name in EMOTIONS
     }
-    return normalize(mixed)
-
+    return vector(mixed)
 
 
 def mix_state_with_memory(
@@ -57,11 +74,13 @@ def mix_state_with_memory(
     alpha: float,
     beta: float,
 ) -> dict[str, float]:
-    """Mix current user, agent and associative-memory signals.
+    """Mix current user, agent and associative-memory signals on one scale.
 
-    Memory is an additive bias. Unlike U_t and E_t, A_t is intentionally not
-    normalized before the mix: repeated encounters can therefore make an
-    association stronger.
+    U_t and E_t are in [0, 1].  A_t is an EMA of previous communication states,
+    also in [0, 1].  The additive memory term can push a coordinate above one,
+    so the educational demo clips the mixed vector back to [0, 1].  It does not
+    perform sum-normalization because the 28 emotion coordinates are independent
+    sigmoid confidences rather than mutually exclusive class probabilities.
     """
     if not 0.0 <= alpha <= 1.0:
         raise ValueError("alpha must be in [0, 1]")
@@ -73,14 +92,15 @@ def mix_state_with_memory(
         + beta * float(memory_state.get(name, 0.0))
         for name in EMOTIONS
     }
-    return normalize(mixed)
+    return vector(mixed)
+
 
 def update_toy_agent_state(
     agent_state: Mapping[str, float],
     user_state: Mapping[str, float],
     inertia: float = 0.8,
 ) -> dict[str, float]:
-    """Toy stand-in for the article's external recurrent emotional subsystem."""
+    """Transparent stand-in for the article's external recurrent state model."""
     if not 0.0 <= inertia <= 1.0:
         raise ValueError("inertia must be in [0, 1]")
     updated = {
@@ -88,5 +108,4 @@ def update_toy_agent_state(
         + (1.0 - inertia) * float(user_state.get(name, 0.0))
         for name in EMOTIONS
     }
-    return normalize(updated)
-
+    return vector(updated)
