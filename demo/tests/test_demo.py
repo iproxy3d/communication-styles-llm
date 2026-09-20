@@ -83,6 +83,36 @@ class DemoTests(unittest.TestCase):
         self.assertTrue(result.trace.motivation_microdialogue)
         self.assertTrue(result.trace.model_messages[-1]["content"].startswith("Ты меня"))
 
+
+    def test_neutral_always_injects_character_style_microdialogue(self) -> None:
+        expected_markers = {
+            "Мира": "Спокойно разберём ситуацию",
+            "Алекс": "Перейдём к сути вопроса",
+            "Ирис": "реальность решила быть обычной",
+        }
+        for character_name, marker in expected_markers.items():
+            demo = self.make_demo(character_name, "neutral")
+            result = demo.respond(
+                "Давайте разберём этот вопрос.",
+                use_memory=False,
+                keep_history=False,
+                learn_memory=False,
+                motivation_level=0,
+            )
+            self.assertEqual(result.trace.selected_emotion, "neutral")
+            self.assertEqual(
+                [item["role"] for item in result.trace.style_microdialogue],
+                ["user", "assistant"],
+            )
+            self.assertTrue(result.trace.style_microdialogue[0]["content"])
+            self.assertIn(marker, result.trace.style_microdialogue[1]["content"])
+            self.assertIn(
+                result.trace.style_microdialogue[0], result.trace.model_messages
+            )
+            self.assertIn(
+                result.trace.style_microdialogue[1], result.trace.model_messages
+            )
+
     def test_hidden_microdialogue_is_not_saved_as_real_history(self) -> None:
         demo = self.make_demo("Алекс", "annoyance")
         result = demo.respond("Опять та же ошибка")
