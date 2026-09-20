@@ -12,7 +12,10 @@ from style_demo.association import EntityExtractor
 from style_demo.db import CHARACTER_WEIGHT_PROFILES, Repository, initialize_database
 from style_demo.emotion import EMOTIONS, apply_character_weights, vector
 from style_demo.engine import StyleDemo
-from style_demo.local_llm import ContextEchoLLM
+from style_demo.local_llm import (
+    DEFAULT_GENERATION_TEMPERATURE,
+    ContextEchoLLM,
+)
 
 
 class FixedClassifier:
@@ -55,6 +58,18 @@ class DemoTests(unittest.TestCase):
             [item.name for item in self.repo.list_characters()],
             ["Мира", "Алекс", "Ирис"],
         )
+
+    def test_generation_defaults_and_system_prompts_support_style(self) -> None:
+        self.assertGreaterEqual(DEFAULT_GENERATION_TEMPERATURE, 0.7)
+        expected_words = {
+            "Мира": ("я рядом", "рада помочь"),
+            "Алекс": ("бро", "чувак", "без базара"),
+            "Ирис": ("вайб", "жиза", "имба", "рил", "кринж"),
+        }
+        for character_name, words in expected_words.items():
+            prompt = self.repo.get_character(character_name).system_prompt.lower()
+            for word in words:
+                self.assertIn(word, prompt)
 
     def test_character_weights_are_stored_separately_from_microdialogues(self) -> None:
         for character in self.repo.list_characters():

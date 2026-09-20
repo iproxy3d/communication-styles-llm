@@ -7,12 +7,16 @@ from pathlib import Path
 from style_demo.db import Repository, initialize_database
 from style_demo.engine import Result, StyleDemo
 from style_demo.emotion_classifier import MultiMotions28Classifier
-from style_demo.local_llm import ContextEchoLLM, LocalTransformersLLM
+from style_demo.local_llm import (
+    DEFAULT_GENERATION_TEMPERATURE,
+    ContextEchoLLM,
+    LocalTransformersLLM,
+)
 
 
 ROOT = Path(__file__).resolve().parent
 DB_PATH = ROOT / "db.sqlite3"
-MODEL_PATH = ROOT / "models" / "qwen2.5-0.5b-instruct"
+MODEL_PATH = ROOT / "models" / "qwen2.5-3b-instruct"
 CLASSIFIER_PATH = ROOT / "models" / "multi-motions-28"
 DEFAULT_MESSAGE = "Я боюсь опоздать на рейс. Что мне делать?"
 
@@ -68,10 +72,14 @@ def print_result(character_name: str, result: Result, show_context: bool) -> Non
             print(f"    стало: {vector_text(update.after)}")
 
 
-def make_model(backend: str):
+def make_model(backend: str, temperature: float = DEFAULT_GENERATION_TEMPERATURE):
+    if temperature < DEFAULT_GENERATION_TEMPERATURE:
+        raise ValueError(
+            f"temperature must be >= {DEFAULT_GENERATION_TEMPERATURE} for the style demo"
+        )
     if backend == "echo":
         return ContextEchoLLM()
-    return LocalTransformersLLM(MODEL_PATH)
+    return LocalTransformersLLM(MODEL_PATH, temperature=temperature)
 
 
 def make_classifier() -> MultiMotions28Classifier:
@@ -275,6 +283,12 @@ def main() -> None:
     parser.add_argument("--memory-beta", type=float, default=0.35, help="beta: влияние A_t на S_t")
     parser.add_argument("--memory-eta", type=float, default=0.20, help="eta: скорость обновления A(entity)")
     parser.add_argument("--memory-gamma", type=float, default=1.0, help="gamma: доля памяти, сохраняемая после обновления")
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=DEFAULT_GENERATION_TEMPERATURE,
+        help="temperature локальной LLM; для демонстрации стиля не ниже 0.7",
+    )
     parser.add_argument("--no-memory", action="store_true", help="отключить чтение и обучение ассоциативной памяти")
     parser.add_argument("--backend", choices=("local", "echo"), default="local", help="echo предназначен только для тестирования конвейера")
     args = parser.parse_args()
@@ -295,9 +309,9 @@ def main() -> None:
             return
 
     try:
-        model = make_model(args.backend)
+        model = make_model(args.backend, args.temperature)
         classifier = make_classifier()
-    except FileNotFoundError as error:
+    except (FileNotFoundError, ValueError) as error:
         parser.error(str(error))
 
     if args.memory_demo:

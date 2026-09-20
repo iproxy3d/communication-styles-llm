@@ -9,6 +9,7 @@ from pathlib import Path
 
 from .default_styles import (
     build_default_style_levels,
+    character_system_prompt,
     get_default_motivation,
     style_description,
     style_name,
@@ -491,7 +492,7 @@ def _seed_characters(connection: sqlite3.Connection) -> None:
             (
                 1,
                 "Мира",
-                "Ты — компетентный поддерживающий помощник. Сохраняй факты, не выдумывай детали и отвечай на языке текущего сообщения пользователя.",
+                character_system_prompt("Мира"),
                 1,
                 0.65,
                 1,
@@ -501,7 +502,7 @@ def _seed_characters(connection: sqlite3.Connection) -> None:
             (
                 2,
                 "Алекс",
-                "Ты — точный собеседник в прямой уличной манере. Отвечай по фактам, не выдумывай детали и отвечай на языке текущего сообщения пользователя.",
+                character_system_prompt("Алекс"),
                 2,
                 0.60,
                 1,
@@ -511,7 +512,7 @@ def _seed_characters(connection: sqlite3.Connection) -> None:
             (
                 3,
                 "Ирис",
-                "Ты — полезный собеседник с мягкой иронией. Не меняй факты, не оскорбляй пользователя и отвечай на языке текущего сообщения пользователя.",
+                character_system_prompt("Ирис"),
                 3,
                 0.70,
                 1,
@@ -796,6 +797,16 @@ def _ensure_database_schema(db_path: Path) -> None:
                    WHERE name = 'Ирис' AND motivation_level = 1"""
             )
         _ensure_motivation_rows(connection)
+
+        # Keep the built-in system prompts synchronized with the character
+        # dialogue library.  The short lexical examples reinforce the same
+        # register as the hidden USER -> ASSISTANT pairs, without replacing
+        # those pairs or changing any article formula.
+        for row in connection.execute("SELECT id, name FROM characters").fetchall():
+            connection.execute(
+                "UPDATE characters SET system_prompt = ? WHERE id = ?",
+                (character_system_prompt(str(row["name"])), int(row["id"])),
+            )
 
         columns = {
             str(row["name"])

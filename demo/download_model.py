@@ -6,8 +6,8 @@ from huggingface_hub import snapshot_download
 
 ROOT = Path(__file__).resolve().parent
 
-GENERATION_MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
-GENERATION_TARGET = ROOT / "models" / "qwen2.5-0.5b-instruct"
+GENERATION_MODEL_ID = "Qwen/Qwen2.5-3B-Instruct"
+GENERATION_TARGET = ROOT / "models" / "qwen2.5-3b-instruct"
 
 EMOTION_MODEL_ID = "proxy3d/multi-motions-28"
 EMOTION_TARGET = ROOT / "models" / "multi-motions-28"

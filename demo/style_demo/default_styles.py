@@ -87,6 +87,15 @@ def style_description(character_name: str) -> str:
         raise KeyError(f"Unknown character: {character_name}") from error
 
 
+def character_system_prompt(character_name: str) -> str:
+    """Return the character's concise system-level style guardrail."""
+    dialogues = load_default_dialogues()
+    try:
+        return str(dialogues[character_name]["system_prompt"])
+    except KeyError as error:
+        raise KeyError(f"Unknown character: {character_name}") from error
+
+
 def validate_default_dialogues(
     dialogues: dict[str, dict[str, Any]] | None = None,
 ) -> None:
@@ -97,6 +106,9 @@ def validate_default_dialogues(
         raise RuntimeError("Dialogue data must contain exactly the three demo characters")
 
     for character_name, character in source.items():
+        system_prompt = character.get("system_prompt")
+        if not isinstance(system_prompt, str) or not system_prompt.strip():
+            raise RuntimeError(f"{character_name}: system_prompt must be non-empty text")
         communication = character.get("communication")
         if not isinstance(communication, dict) or set(communication) != set(EMOTIONS):
             raise RuntimeError(
@@ -131,4 +143,3 @@ def validate_default_dialogues(
                 )
             if not pair["user"].strip() or not pair["assistant"].strip():
                 raise RuntimeError(f"{character_name}/motivation/{level} contains empty text")
-
