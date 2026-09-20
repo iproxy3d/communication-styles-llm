@@ -103,7 +103,11 @@ class StyleDemo:
         )
 
         selected_emotion = max(communication_state, key=communication_state.get)
-        style_name = self.repository.get_style_name(self.character.style_id)
+        style_name = (
+            self.repository.get_style_name(self.character.style_id)
+            if use_style
+            else "disabled"
+        )
         style_microdialogue = (
             self.repository.get_style_microdialogue(
                 self.character.style_id, selected_emotion, self.character.intensity

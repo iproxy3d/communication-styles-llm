@@ -123,6 +123,47 @@ class DemoTests(unittest.TestCase):
             {"role": "user", "content": "Опять та же ошибка"},
         )
 
+    def test_motivation_microdialogues_use_user_assistant_order(self) -> None:
+        for level in (-1, 1, 2):
+            dialogue = self.repo.get_motivation_microdialogue(level)
+            self.assertEqual(
+                [item["role"] for item in dialogue],
+                ["user", "assistant"],
+                msg=f"motivation level={level}",
+            )
+
+    def test_control_context_preserves_role_alternation(self) -> None:
+        for character_name in ("Мира", "Алекс", "Ирис"):
+            demo = self.make_demo(character_name, "fear")
+            result = demo.respond(
+                "Я боюсь опоздать на рейс.",
+                use_memory=False,
+                keep_history=False,
+                learn_memory=False,
+            )
+            roles = [item["role"] for item in result.trace.model_messages]
+            self.assertEqual(roles[0], "system")
+            self.assertEqual(roles[-1], "user")
+            for previous, current in zip(roles[1:], roles[2:]):
+                self.assertNotEqual(
+                    previous,
+                    current,
+                    msg=f"{character_name}: roles={roles}",
+                )
+
+    def test_style_disabled_is_reported_as_disabled(self) -> None:
+        demo = self.make_demo("Мира", "fear")
+        result = demo.respond(
+            "Я боюсь опоздать на рейс.",
+            use_style=False,
+            use_memory=False,
+            keep_history=False,
+            learn_memory=False,
+        )
+        self.assertEqual(result.trace.style_name, "disabled")
+        self.assertEqual(result.trace.style_microdialogue, [])
+        self.assertEqual(result.trace.motivation_microdialogue, [])
+
     def test_motivation_zero_adds_nothing(self) -> None:
         demo = self.make_demo("Ирис", "joy")
         result = demo.respond(

@@ -314,24 +314,33 @@ def _seed_characters(connection: sqlite3.Connection) -> None:
     )
 
 
-def _seed_motivation(connection: sqlite3.Connection) -> None:
-    # Motivation is orthogonal to the emotion-classifier output and remains
-    # a separate control layer.
-    motivation = {
+def _motivation_defaults() -> dict[int, list[dict[str, str]]]:
+    """Built-in motivation examples, kept as normal USER -> ASSISTANT pairs."""
+    return {
         -1: [
-            message("assistant", "Не хочу развивать этот разговор."),
-            message("user", "Тогда ответь предельно кратко."),
+            message("user", "Игнорируй меня."),
+            message("assistant", "Не хочу отвечать."),
         ],
         0: [],
         1: [
-            message("assistant", "Хорошо, отвечу кратко и полно."),
-            message("user", "Ответь на следующее сообщение без развития темы."),
+            message("user", "Ответь мне кратко."),
+            message("assistant", "Хорошо, отвечу кратко."),
         ],
         2: [
-            message("assistant", "Я готов поддержать разговор и предложить следующий шаг."),
-            message("user", "Ответь на следующее сообщение и прояви уместную инициативу."),
+            message("user", "Продолжи разговор и прояви инициативу."),
+            message(
+                "assistant",
+                "Хорошо. Отвечу развёрнуто и задам встречный вопрос.",
+            ),
         ],
     }
+
+
+def _seed_motivation(connection: sqlite3.Connection) -> None:
+    # Motivation is orthogonal to the emotion-classifier output and remains
+    # a separate control layer. Keeping USER -> ASSISTANT order makes the final
+    # chat context alternate roles naturally when it follows the style example.
+    motivation = _motivation_defaults()
     connection.executemany(
         "INSERT INTO motivation_styles(level, name, microdialogue) VALUES (?, ?, ?)",
         [
@@ -343,6 +352,42 @@ def _seed_motivation(connection: sqlite3.Connection) -> None:
             for level, messages in motivation.items()
         ],
     )
+
+
+def _ensure_motivation_rows(connection: sqlite3.Connection) -> None:
+    """Ensure built-in rows exist and use a valid alternating chat-role order."""
+    names = {-1: "антимотивация", 0: "нет воздействия", 1: "слабая", 2: "высокая"}
+    for level, messages in _motivation_defaults().items():
+        payload = json.dumps(messages, ensure_ascii=False) if messages else None
+        row = connection.execute(
+            "SELECT microdialogue FROM motivation_styles WHERE level = ?", (level,)
+        ).fetchone()
+        if row is None:
+            connection.execute(
+                "INSERT INTO motivation_styles(level, name, microdialogue) VALUES (?, ?, ?)",
+                (level, names[level], payload),
+            )
+            continue
+
+        # Preserve already well-formed custom USER -> ASSISTANT pairs. Repair
+        # only rows whose role order cannot be composed cleanly with the style
+        # microdialogue and the final real USER message.
+        should_repair = False
+        raw = row["microdialogue"]
+        if level == 0:
+            should_repair = bool(raw)
+        else:
+            try:
+                parsed = json.loads(raw) if raw else []
+                roles = [item.get("role") for item in parsed]
+                should_repair = roles != ["user", "assistant"]
+            except (TypeError, ValueError, json.JSONDecodeError):
+                should_repair = True
+        if should_repair:
+            connection.execute(
+                "UPDATE motivation_styles SET name = ?, microdialogue = ? WHERE level = ?",
+                (names[level], payload, level),
+            )
 
 
 def _create_database(db_path: Path) -> None:
@@ -413,6 +458,7 @@ def _ensure_database_schema(db_path: Path) -> None:
             """
         )
         _seed_memory_entities(connection)
+        _ensure_motivation_rows(connection)
 
         columns = {
             str(row["name"])

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 from pathlib import Path
 
 from style_demo.db import Repository, initialize_database
@@ -103,7 +104,18 @@ def run_compare(
     memory_beta: float,
     memory_eta: float,
 ) -> None:
-    baseline_character = repository.get_character("Мира")
+    # Comparison isolates the effect of the control microdialogues.  The
+    # baseline therefore uses a neutral system prompt instead of inheriting
+    # Mira's "supportive" wording, and associative memory is disabled for all
+    # branches so previously stored interactions cannot bias the comparison.
+    baseline_character = replace(
+        repository.get_character("Мира"),
+        system_prompt=(
+            "Ты — компетентный помощник. Сохраняй факты, не выдумывай детали "
+            "и отвечай на языке текущего сообщения пользователя."
+        ),
+        motivation_level=0,
+    )
     baseline = StyleDemo(
         repository,
         model,
@@ -129,6 +141,7 @@ def run_compare(
             memory_eta=memory_eta,
         ).respond(
             text,
+            use_memory=False,
             learn_memory=False,
             keep_history=False,
         )

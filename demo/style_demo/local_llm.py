@@ -37,14 +37,24 @@ class LocalTransformersLLM:
             return_tensors="pt",
         ).to(self.device)
         attention_mask = self.torch.ones_like(inputs)
+        # Qwen ships sampling values (temperature/top_p/top_k) in its
+        # generation_config.  This demo intentionally uses deterministic greedy
+        # decoding, so explicitly disable sampling-only knobs instead of letting
+        # Transformers warn about a contradictory configuration.
+        pad_token_id = self.tokenizer.pad_token_id
+        if pad_token_id is None:
+            pad_token_id = self.tokenizer.eos_token_id
         with self.torch.inference_mode():
             output = self.model.generate(
                 input_ids=inputs,
                 attention_mask=attention_mask,
                 max_new_tokens=max_new_tokens,
                 do_sample=False,
+                temperature=None,
+                top_p=None,
+                top_k=None,
                 repetition_penalty=1.05,
-                pad_token_id=self.tokenizer.eos_token_id,
+                pad_token_id=pad_token_id,
             )
         new_tokens = output[0, inputs.shape[-1] :]
         return self.tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
