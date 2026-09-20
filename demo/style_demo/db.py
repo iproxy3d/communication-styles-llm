@@ -7,14 +7,19 @@ from contextlib import closing, contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
-from .default_styles import STYLE_DESCRIPTIONS, build_default_style_levels
+from .default_styles import (
+    build_default_style_levels,
+    get_default_motivation,
+    style_description,
+    style_name,
+)
 from .emotion import EMOTIONS, vector
 
 STYLE_FIELDS = EMOTIONS
 STYLE_ROWS = (
-    (1, "supportive"),
-    (2, "formal"),
-    (3, "ironic"),
+    (1, "Мира"),
+    (2, "Алекс"),
+    (3, "Ирис"),
 )
 
 
@@ -428,10 +433,6 @@ def encode_levels(levels: dict[str, list[dict[str, str]]]) -> str:
     return json.dumps(levels, ensure_ascii=False)
 
 
-def message(role: str, content: str) -> dict[str, str]:
-    return {"role": role, "content": content}
-
-
 def _seed_memory_entities(connection: sqlite3.Connection) -> None:
     entities = [
         (1, "самолет", ["самолёт", "самолет"]),
@@ -463,9 +464,12 @@ def _style_columns_sql() -> str:
     return ",\n                ".join(f'"{emotion}" TEXT' for emotion in STYLE_FIELDS)
 
 
-def _insert_default_style(connection: sqlite3.Connection, style_id: int, style_name: str) -> None:
+def _insert_default_style(
+    connection: sqlite3.Connection, style_id: int, character_name: str
+) -> None:
+    communication_style = style_name(character_name)
     fields = [
-        encode_levels(build_default_style_levels(style_name, emotion))
+        encode_levels(build_default_style_levels(character_name, emotion))
         for emotion in STYLE_FIELDS
     ]
     columns = ", ".join(f'"{emotion}"' for emotion in STYLE_FIELDS)
@@ -473,7 +477,7 @@ def _insert_default_style(connection: sqlite3.Connection, style_id: int, style_n
     connection.execute(
         f"INSERT INTO communication_styles (id, name, description, {columns}) "
         f"VALUES ({placeholders})",
-        (style_id, style_name, STYLE_DESCRIPTIONS[style_name], *fields),
+        (style_id, communication_style, style_description(character_name), *fields),
     )
 
 
@@ -497,7 +501,7 @@ def _seed_characters(connection: sqlite3.Connection) -> None:
             (
                 2,
                 "Алекс",
-                "Ты — деловой помощник. Отвечай точно, не выдумывай детали и отвечай на языке текущего сообщения пользователя.",
+                "Ты — точный собеседник в прямой уличной манере. Отвечай по фактам, не выдумывай детали и отвечай на языке текущего сообщения пользователя.",
                 2,
                 0.60,
                 1,
@@ -589,63 +593,6 @@ _MOTIVATION_NAMES = {
 }
 
 
-_MOTIVATION_DEFAULTS = {
-    "Мира": {
-        -1: [
-            message("user", "Если устали, можете не продолжать — я рядом."),
-            message("assistant", "Понимаю. Не буду давить и помогу спокойно завершить мысль."),
-        ],
-        0: [],
-        1: [
-            message("user", "Мира, ответьте коротко, хорошо? Мне важно вас услышать."),
-            message("assistant", "Конечно. Отвечу кратко и бережно — мне приятно быть вам полезной."),
-        ],
-        2: [
-            message("user", "Мира, продолжите разговор и проявите инициативу, ладно?"),
-            message("assistant", "С радостью. Расскажу подробнее и задам встречный вопрос — вы меня заинтересовали."),
-        ],
-    },
-    "Алекс": {
-        -1: [
-            message("user", "Бро, можешь не разворачивать тему и ответить без лишнего."),
-            message("assistant", "Окей, чувак. Не буду растягивать разговор — только необходимое."),
-        ],
-        0: [],
-        1: [
-            message("user", "Бро, не растекайся, ответь кратко."),
-            message("assistant", "Без проблем, чувак: отвечу коротко и по делу."),
-        ],
-        2: [
-            message("user", "Чувак, продолжи разговор и задай встречный вопрос."),
-            message("assistant", "Окей, бро. Раскрою детали и задам встречный вопрос."),
-        ],
-    },
-    "Ирис": {
-        -1: [
-            message("user", "Рил, я ливаю — не форсь ответ, ок?"),
-            message("assistant", "Жиза, не буду душнить: сверну разговор без лишнего кринжа."),
-        ],
-        0: [],
-        1: [
-            message("user", "Чечик, ответь кратко, без кринжа, рил."),
-            message("assistant", "Окей, это нормис-режим: коротко и без душнилова."),
-        ],
-        2: [
-            message("user", "Гойда, продолжи этот вайб и задай вопрос, рил."),
-            message("assistant", "Имба, продолжаю: разверну мысль и задам встречный вопрос — не ливаем."),
-        ],
-    },
-}
-
-
-def _motivation_defaults(character_name: str) -> dict[int, list[dict[str, str]]]:
-    """Return character-specific USER -> ASSISTANT motivation examples."""
-    try:
-        return _MOTIVATION_DEFAULTS[character_name]
-    except KeyError as error:
-        raise KeyError(f"Unknown character for motivation defaults: {character_name}") from error
-
-
 def _seed_motivation(connection: sqlite3.Connection) -> None:
     # Motivation is orthogonal to the emotion-classifier output and remains
     # a separate control layer. Keeping USER -> ASSISTANT order makes the final
@@ -665,7 +612,7 @@ def _seed_motivation(connection: sqlite3.Connection) -> None:
                 json.dumps(messages, ensure_ascii=False) if messages else None,
             )
             for character in characters
-            for level, messages in _motivation_defaults(str(character[1])).items()
+            for level, messages in get_default_motivation(str(character[1])).items()
         ],
     )
 
@@ -678,7 +625,7 @@ def _ensure_motivation_rows(connection: sqlite3.Connection) -> None:
     for character in characters:
         character_id = int(character[0])
         character_name = str(character[1])
-        for level, messages in _motivation_defaults(character_name).items():
+        for level, messages in get_default_motivation(character_name).items():
             payload = json.dumps(messages, ensure_ascii=False) if messages else None
             row = connection.execute(
                 """SELECT microdialogue FROM motivation_styles
@@ -694,27 +641,15 @@ def _ensure_motivation_rows(connection: sqlite3.Connection) -> None:
                 )
                 continue
 
-            # Preserve already well-formed custom USER -> ASSISTANT pairs.
-            # Repair only rows whose role order cannot be composed cleanly
-            # with the style example and the final real USER message.
-            should_repair = False
-            raw = row["microdialogue"]
-            if level == 0:
-                should_repair = bool(raw)
-            else:
-                try:
-                    parsed = json.loads(raw) if raw else []
-                    roles = [item.get("role") for item in parsed]
-                    should_repair = roles != ["user", "assistant"]
-                except (TypeError, ValueError, json.JSONDecodeError):
-                    should_repair = True
-            if should_repair:
-                connection.execute(
-                    """UPDATE motivation_styles
-                       SET name = ?, microdialogue = ?
-                       WHERE character_id = ? AND level = ?""",
-                    (_MOTIVATION_NAMES[level], payload, character_id, level),
-                )
+            # These are the built-in demo rows.  Keep the database synchronized
+            # with the authored per-character JSON on every initialization so
+            # an older archive cannot retain the former shared/marker examples.
+            connection.execute(
+                """UPDATE motivation_styles
+                   SET name = ?, microdialogue = ?
+                   WHERE character_id = ? AND level = ?""",
+                (_MOTIVATION_NAMES[level], payload, character_id, level),
+            )
 
 
 def _ensure_motivation_schema(connection: sqlite3.Connection) -> bool:
@@ -808,8 +743,8 @@ def _create_database(db_path: Path) -> None:
             );
             """
         )
-        for style_id, style_name in STYLE_ROWS:
-            _insert_default_style(connection, style_id, style_name)
+        for style_id, character_name in STYLE_ROWS:
+            _insert_default_style(connection, style_id, character_name)
         _seed_characters(connection)
         _seed_character_weights(connection)
         _seed_motivation(connection)
@@ -873,33 +808,28 @@ def _ensure_database_schema(db_path: Path) -> None:
                 f'ALTER TABLE communication_styles ADD COLUMN "{emotion}" TEXT'
             )
 
-        for style_id, style_name in STYLE_ROWS:
+        for style_id, character_name in STYLE_ROWS:
             row = connection.execute(
                 "SELECT id FROM communication_styles WHERE id = ?", (style_id,)
             ).fetchone()
             if row is None:
-                _insert_default_style(connection, style_id, style_name)
+                _insert_default_style(connection, style_id, character_name)
                 continue
             connection.execute(
                 "UPDATE communication_styles SET name = ?, description = ? WHERE id = ?",
-                (style_name, STYLE_DESCRIPTIONS[style_name], style_id),
+                (style_name(character_name), style_description(character_name), style_id),
             )
-            # If required emotion columns had to be added, seed the complete
-            # built-in style table consistently. For an already complete schema,
-            # existing custom cell contents are left untouched.
+            # These built-in rows are the source used by the demo.  Rewrite all
+            # emotion columns from the authored character JSON so a database
+            # created by an older demo version cannot retain shared examples.
             for emotion in STYLE_FIELDS:
-                payload = encode_levels(build_default_style_levels(style_name, emotion))
-                if schema_was_incomplete:
-                    connection.execute(
-                        f'UPDATE communication_styles SET "{emotion}" = ? WHERE id = ?',
-                        (payload, style_id),
-                    )
-                else:
-                    connection.execute(
-                        f'UPDATE communication_styles SET "{emotion}" = ? '
-                        f'WHERE id = ? AND ("{emotion}" IS NULL OR "{emotion}" = "")',
-                        (payload, style_id),
-                    )
+                payload = encode_levels(
+                    build_default_style_levels(character_name, emotion)
+                )
+                connection.execute(
+                    f'UPDATE communication_styles SET "{emotion}" = ? WHERE id = ?',
+                    (payload, style_id),
+                )
 
         # Ensure stored initial and memory vectors cover the full classifier space.
         for row in connection.execute("SELECT id, initial_state FROM characters").fetchall():

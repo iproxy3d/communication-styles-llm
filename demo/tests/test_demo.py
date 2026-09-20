@@ -150,12 +150,8 @@ class DemoTests(unittest.TestCase):
 
 
     def test_neutral_always_injects_character_style_microdialogue(self) -> None:
-        expected_markers = {
-            "Мира": "Спокойно разберём ситуацию",
-            "Алекс": "Перейдём к сути вопроса",
-            "Ирис": "реальность решила быть обычной",
-        }
-        for character_name, marker in expected_markers.items():
+        dialogues = {}
+        for character_name in ("Мира", "Алекс", "Ирис"):
             demo = self.make_demo(character_name, "neutral")
             result = demo.respond(
                 "Давайте разберём этот вопрос.",
@@ -170,13 +166,16 @@ class DemoTests(unittest.TestCase):
                 ["user", "assistant"],
             )
             self.assertTrue(result.trace.style_microdialogue[0]["content"])
-            self.assertIn(marker, result.trace.style_microdialogue[1]["content"])
             self.assertIn(
                 result.trace.style_microdialogue[0], result.trace.model_messages
             )
             self.assertIn(
                 result.trace.style_microdialogue[1], result.trace.model_messages
             )
+            dialogues[character_name] = tuple(
+                item["content"] for item in result.trace.style_microdialogue
+            )
+        self.assertEqual(len(set(dialogues.values())), 3)
 
     def test_hidden_microdialogue_is_not_saved_as_real_history(self) -> None:
         demo = self.make_demo("Алекс", "annoyance")
@@ -199,6 +198,19 @@ class DemoTests(unittest.TestCase):
                 )
 
     def test_motivation_microdialogues_are_character_specific(self) -> None:
+        characters = [self.repo.get_character(name) for name in ("Мира", "Алекс", "Ирис")]
+        for level in (-1, 1, 2):
+            dialogues = [
+                tuple(
+                    (item["role"], item["content"])
+                    for item in self.repo.get_motivation_microdialogue(
+                        character.id, level
+                    )
+                )
+                for character in characters
+            ]
+            self.assertEqual(len(set(dialogues)), 3, msg=f"shared motivation level {level}")
+
         mira = self.repo.get_character("Мира")
         alex = self.repo.get_character("Алекс")
         iris = self.repo.get_character("Ирис")
@@ -229,41 +241,45 @@ class DemoTests(unittest.TestCase):
         )
         self.assertEqual(result.trace.motivation_microdialogue, [])
 
-    def test_style_microdialogues_put_character_markers_on_both_roles(self) -> None:
-        markers = {
-            "Мира": (
-                ("заинтерес", "расскаж", "слушаю", "поделитесь", "готовы"),
-                ("приятно", "заинтерес", "вместе", "рядом", "важно"),
-            ),
-            "Алекс": ("бро", "чувак", "рил", "без проблем"),
-            "Ирис": ("рил", "вайб", "жиза", "pov", "имба", "кринж", "рофл", "мув"),
-        }
-        for character in self.repo.list_characters():
-            marker_set = markers[character.name]
-            if character.name == "Мира":
-                user_markers, assistant_markers = marker_set
-            else:
-                user_markers = marker_set
-                assistant_markers = marker_set
-            for emotion in EMOTIONS:
-                for intensity in (0, 1, 2):
-                    dialogue = self.repo.get_style_microdialogue(
-                        character.style_id, emotion, intensity
+    def test_style_microdialogues_are_authored_per_character(self) -> None:
+        characters = [self.repo.get_character(name) for name in ("Мира", "Алекс", "Ирис")]
+        for emotion in EMOTIONS:
+            for intensity in (0, 1, 2):
+                dialogues = [
+                    tuple(
+                        (item["role"], item["content"])
+                        for item in self.repo.get_style_microdialogue(
+                            character.style_id, emotion, intensity
+                        )
                     )
-                    self.assertTrue(
-                        any(
-                            marker in dialogue[0]["content"].lower()
-                            for marker in user_markers
-                        ),
-                        msg=f"missing user marker for {character.name}/{emotion}/{intensity}",
-                    )
-                    self.assertTrue(
-                        any(
-                            marker in dialogue[1]["content"].lower()
-                            for marker in assistant_markers
-                        ),
-                        msg=f"missing assistant marker for {character.name}/{emotion}/{intensity}",
-                    )
+                    for character in characters
+                ]
+                self.assertEqual(
+                    len(set(dialogues)),
+                    3,
+                    msg=f"shared communication pair at {emotion}/{intensity}",
+                )
+
+        alex = self.repo.get_style_microdialogue(
+            self.repo.get_character("Алекс").style_id, "anger", 1
+        )
+        self.assertEqual(
+            alex,
+            [
+                {"role": "user", "content": "Не тупи чувак"},
+                {"role": "assistant", "content": "Ты на кого наезжаешь бро"},
+            ],
+        )
+        iris = self.repo.get_style_microdialogue(
+            self.repo.get_character("Ирис").style_id, "anger", 1
+        )
+        self.assertEqual(
+            iris,
+            [
+                {"role": "user", "content": "Ты совсем имба?"},
+                {"role": "assistant", "content": "Тюбик, закрой свой рот"},
+            ],
+        )
 
     def test_control_context_preserves_role_alternation(self) -> None:
         for character_name in ("Мира", "Алекс", "Ирис"):
