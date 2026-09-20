@@ -252,9 +252,121 @@ STYLE_RESPONSES_RU = {
 
 STYLE_DESCRIPTIONS = {
     "supportive": "Тёплый, спокойный, поддерживающий",
-    "formal": "Сдержанный, точный, деловой",
-    "ironic": "Мягкая ирония без изменения фактов и без насмешки над уязвимостью пользователя",
+    # The database key remains ``formal`` for compatibility with the article
+    # example.  Alex's concrete demo utterances are intentionally colloquial:
+    # the contrast is carried by direct, precise answers with slang markers.
+    "formal": "Точный, прямой, разговорный; использует «бро», «чувак» и «без проблем»",
+    "ironic": "Мягкая ирония с молодёжным сленгом без изменения фактов и без насмешки над уязвимостью пользователя",
 }
+
+
+# The classifier cues keep their emotional meaning, while these short
+# character markers make the hidden examples teach the LLM the requested
+# register.  Markers are placed on both sides of every pair: a marker only on
+# the assistant line would not reliably establish the dialogue style.
+_ALEX_USER_MARKERS = (
+    "Бро",
+    "Чувак",
+    "Слушай, бро",
+    "Эй, чувак",
+    "Рил, бро",
+    "Окей, чувак",
+)
+_ALEX_ASSISTANT_MARKERS = (
+    "Без проблем, бро.",
+    "Понял, чувак.",
+    "Окей, бро.",
+    "Рил, без проблем.",
+    "Чувак, принято.",
+    "Бро, по делу.",
+)
+
+_IRIS_USER_MARKERS = (
+    "Рил,",
+    "Жиза,",
+    "Вайб такой:",
+    "POV:",
+    "Рофл, но",
+    "Имба, но",
+    "Кринж, но",
+    "Мув такой:",
+)
+_IRIS_ASSISTANT_MARKERS = (
+    "Рил —",
+    "Жиза: ",
+    "Вайб пойман. ",
+    "POV принят: ",
+    "Рофл в сторону: ",
+    "Имба не обещаю, но ",
+    "Без кринжа: ",
+    "Мув понятен: ",
+)
+
+_MIRA_USER_MARKERS = (
+    "Вы меня заинтересовали: ",
+    "Ну что, расскажете мне? ",
+    "Слушаю вас внимательно: ",
+    "Поделитесь со мной: ",
+)
+_MIRA_ASSISTANT_MARKERS = (
+    "Мне приятно вас слышать. ",
+    "Вы меня заинтересовали — ",
+    "Давайте разберёмся вместе, хорошо? ",
+    "Я рядом; рассказывайте. ",
+)
+
+_MIRA_SENSITIVE_EMOTIONS = {
+    "caring",
+    "fear",
+    "grief",
+    "nervousness",
+    "remorse",
+    "sadness",
+}
+
+
+def _decorate_character_dialogue(
+    style_name: str,
+    emotion: str,
+    intensity: int,
+    user_content: str,
+    assistant_content: str,
+) -> tuple[str, str]:
+    """Add a small character register cue to both dialogue roles.
+
+    These are textual examples only.  They do not alter the emotion score,
+    the style-selection formula, or the intensity field; they make the
+    character-specific communication library visible to the local LLM.
+    """
+    ordinal = EMOTIONS.index(emotion) * 3 + intensity
+    if style_name == "formal":
+        user_marker = _ALEX_USER_MARKERS[ordinal % len(_ALEX_USER_MARKERS)]
+        assistant_marker = _ALEX_ASSISTANT_MARKERS[
+            ordinal % len(_ALEX_ASSISTANT_MARKERS)
+        ]
+        return f"{user_marker}, {user_content}", f"{assistant_marker} {assistant_content}"
+
+    if style_name == "ironic":
+        user_marker = _IRIS_USER_MARKERS[ordinal % len(_IRIS_USER_MARKERS)]
+        assistant_marker = _IRIS_ASSISTANT_MARKERS[
+            ordinal % len(_IRIS_ASSISTANT_MARKERS)
+        ]
+        return f"{user_marker} {user_content}", f"{assistant_marker}{assistant_content}"
+
+    if style_name == "supportive":
+        # In vulnerable states the marker remains warm rather than flirtatious;
+        # the supportive meaning and the no-mockery rule take precedence.
+        if emotion in _MIRA_SENSITIVE_EMOTIONS:
+            user_marker = "Если готовы, расскажите мне: "
+            assistant_marker = "Мне важно вас услышать. "
+        else:
+            user_marker = _MIRA_USER_MARKERS[ordinal % len(_MIRA_USER_MARKERS)]
+            assistant_marker = _MIRA_ASSISTANT_MARKERS[
+                ordinal % len(_MIRA_ASSISTANT_MARKERS)
+            ]
+        return f"{user_marker}{user_content}", f"{assistant_marker}{assistant_content}"
+
+    raise KeyError(f"Unknown communication style: {style_name}")
 
 
 def build_default_style_levels(style_name: str, emotion: str) -> dict[str, list[dict[str, str]]]:
@@ -266,14 +378,25 @@ def build_default_style_levels(style_name: str, emotion: str) -> dict[str, list[
     """
     if emotion not in EMOTIONS:
         raise KeyError(f"Unsupported emotion: {emotion}")
+    if style_name not in STYLE_RESPONSES_RU:
+        raise KeyError(f"Unknown communication style: {style_name}")
     responses = STYLE_RESPONSES_RU[style_name][emotion]
     cues = EMOTION_CUES_RU[emotion]
     return {
         str(level): [
-            {"role": "user", "content": cues[level]},
-            {"role": "assistant", "content": responses[level]},
+            {"role": "user", "content": user_content},
+            {"role": "assistant", "content": assistant_content},
         ]
         for level in range(3)
+        for user_content, assistant_content in (
+            _decorate_character_dialogue(
+                style_name,
+                emotion,
+                level,
+                cues[level],
+                responses[level],
+            ),
+        )
     }
 
 

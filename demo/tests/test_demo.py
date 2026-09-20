@@ -107,6 +107,7 @@ class DemoTests(unittest.TestCase):
         demo = self.make_demo("Ирис", "anger")
         result = demo.respond(
             "Ты меня бесишь, я очень злюсь!",
+            motivation_level=1,
             keep_history=False,
             learn_memory=False,
         )
@@ -188,13 +189,81 @@ class DemoTests(unittest.TestCase):
         )
 
     def test_motivation_microdialogues_use_user_assistant_order(self) -> None:
-        for level in (-1, 1, 2):
-            dialogue = self.repo.get_motivation_microdialogue(level)
-            self.assertEqual(
-                [item["role"] for item in dialogue],
-                ["user", "assistant"],
-                msg=f"motivation level={level}",
-            )
+        for character in self.repo.list_characters():
+            for level in (-1, 1, 2):
+                dialogue = self.repo.get_motivation_microdialogue(character.id, level)
+                self.assertEqual(
+                    [item["role"] for item in dialogue],
+                    ["user", "assistant"],
+                    msg=f"{character.name}/motivation level={level}",
+                )
+
+    def test_motivation_microdialogues_are_character_specific(self) -> None:
+        mira = self.repo.get_character("Мира")
+        alex = self.repo.get_character("Алекс")
+        iris = self.repo.get_character("Ирис")
+        self.assertIn(
+            "коротко",
+            self.repo.get_motivation_microdialogue(mira.id, 1)[0]["content"],
+        )
+        self.assertIn(
+            "бро",
+            self.repo.get_motivation_microdialogue(alex.id, 1)[0]["content"].lower(),
+        )
+        self.assertIn(
+            "вайб",
+            self.repo.get_motivation_microdialogue(iris.id, 2)[0]["content"].lower(),
+        )
+        self.assertEqual(
+            self.repo.get_motivation_microdialogue(iris.id, 0),
+            [],
+        )
+
+    def test_iris_default_motivation_is_disabled(self) -> None:
+        iris = self.repo.get_character("Ирис")
+        self.assertEqual(iris.motivation_level, 0)
+        result = self.make_demo("Ирис", "neutral").respond(
+            "Проверим факты.",
+            keep_history=False,
+            learn_memory=False,
+        )
+        self.assertEqual(result.trace.motivation_microdialogue, [])
+
+    def test_style_microdialogues_put_character_markers_on_both_roles(self) -> None:
+        markers = {
+            "Мира": (
+                ("заинтерес", "расскаж", "слушаю", "поделитесь", "готовы"),
+                ("приятно", "заинтерес", "вместе", "рядом", "важно"),
+            ),
+            "Алекс": ("бро", "чувак", "рил", "без проблем"),
+            "Ирис": ("рил", "вайб", "жиза", "pov", "имба", "кринж", "рофл", "мув"),
+        }
+        for character in self.repo.list_characters():
+            marker_set = markers[character.name]
+            if character.name == "Мира":
+                user_markers, assistant_markers = marker_set
+            else:
+                user_markers = marker_set
+                assistant_markers = marker_set
+            for emotion in EMOTIONS:
+                for intensity in (0, 1, 2):
+                    dialogue = self.repo.get_style_microdialogue(
+                        character.style_id, emotion, intensity
+                    )
+                    self.assertTrue(
+                        any(
+                            marker in dialogue[0]["content"].lower()
+                            for marker in user_markers
+                        ),
+                        msg=f"missing user marker for {character.name}/{emotion}/{intensity}",
+                    )
+                    self.assertTrue(
+                        any(
+                            marker in dialogue[1]["content"].lower()
+                            for marker in assistant_markers
+                        ),
+                        msg=f"missing assistant marker for {character.name}/{emotion}/{intensity}",
+                    )
 
     def test_control_context_preserves_role_alternation(self) -> None:
         for character_name in ("Мира", "Алекс", "Ирис"):

@@ -231,13 +231,19 @@ class Repository:
         key = str(max(0, min(2, intensity)))
         return list(levels.get(key, levels.get("1", [])))
 
-    def get_motivation_microdialogue(self, level: int) -> list[dict[str, str]]:
+    def get_motivation_microdialogue(
+        self, character_id: int, level: int
+    ) -> list[dict[str, str]]:
         with self.connect() as connection:
             row = connection.execute(
-                "SELECT microdialogue FROM motivation_styles WHERE level = ?", (level,)
+                """SELECT microdialogue FROM motivation_styles
+                   WHERE character_id = ? AND level = ?""",
+                (character_id, level),
             ).fetchone()
         if row is None:
-            raise KeyError(f"Unknown motivation level: {level}")
+            raise KeyError(
+                f"Unknown motivation level {level} for character id {character_id}"
+            )
         return json.loads(row["microdialogue"]) if row["microdialogue"] else []
 
     def list_memory_entities(self) -> list[MemoryEntity]:
@@ -505,7 +511,7 @@ def _seed_characters(connection: sqlite3.Connection) -> None:
                 3,
                 0.70,
                 1,
-                1,
+                0,
                 neutral_state,
             ),
         ],
@@ -575,80 +581,184 @@ def _seed_character_weights(connection: sqlite3.Connection) -> None:
         )
 
 
-def _motivation_defaults() -> dict[int, list[dict[str, str]]]:
-    """Built-in motivation examples, kept as normal USER -> ASSISTANT pairs."""
-    return {
+_MOTIVATION_NAMES = {
+    -1: "антимотивация",
+    0: "нет воздействия",
+    1: "слабая",
+    2: "высокая",
+}
+
+
+_MOTIVATION_DEFAULTS = {
+    "Мира": {
         -1: [
-            message("user", "Игнорируй меня."),
-            message("assistant", "Не хочу отвечать."),
+            message("user", "Если устали, можете не продолжать — я рядом."),
+            message("assistant", "Понимаю. Не буду давить и помогу спокойно завершить мысль."),
         ],
         0: [],
         1: [
-            message("user", "Ответь мне кратко."),
-            message("assistant", "Хорошо, отвечу кратко."),
+            message("user", "Мира, ответьте коротко, хорошо? Мне важно вас услышать."),
+            message("assistant", "Конечно. Отвечу кратко и бережно — мне приятно быть вам полезной."),
         ],
         2: [
-            message("user", "Продолжи разговор и прояви инициативу."),
-            message(
-                "assistant",
-                "Хорошо. Отвечу развёрнуто и задам встречный вопрос.",
-            ),
+            message("user", "Мира, продолжите разговор и проявите инициативу, ладно?"),
+            message("assistant", "С радостью. Расскажу подробнее и задам встречный вопрос — вы меня заинтересовали."),
         ],
-    }
+    },
+    "Алекс": {
+        -1: [
+            message("user", "Бро, можешь не разворачивать тему и ответить без лишнего."),
+            message("assistant", "Окей, чувак. Не буду растягивать разговор — только необходимое."),
+        ],
+        0: [],
+        1: [
+            message("user", "Бро, не растекайся, ответь кратко."),
+            message("assistant", "Без проблем, чувак: отвечу коротко и по делу."),
+        ],
+        2: [
+            message("user", "Чувак, продолжи разговор и задай встречный вопрос."),
+            message("assistant", "Окей, бро. Раскрою детали и задам встречный вопрос."),
+        ],
+    },
+    "Ирис": {
+        -1: [
+            message("user", "Рил, я ливаю — не форсь ответ, ок?"),
+            message("assistant", "Жиза, не буду душнить: сверну разговор без лишнего кринжа."),
+        ],
+        0: [],
+        1: [
+            message("user", "Чечик, ответь кратко, без кринжа, рил."),
+            message("assistant", "Окей, это нормис-режим: коротко и без душнилова."),
+        ],
+        2: [
+            message("user", "Гойда, продолжи этот вайб и задай вопрос, рил."),
+            message("assistant", "Имба, продолжаю: разверну мысль и задам встречный вопрос — не ливаем."),
+        ],
+    },
+}
+
+
+def _motivation_defaults(character_name: str) -> dict[int, list[dict[str, str]]]:
+    """Return character-specific USER -> ASSISTANT motivation examples."""
+    try:
+        return _MOTIVATION_DEFAULTS[character_name]
+    except KeyError as error:
+        raise KeyError(f"Unknown character for motivation defaults: {character_name}") from error
 
 
 def _seed_motivation(connection: sqlite3.Connection) -> None:
     # Motivation is orthogonal to the emotion-classifier output and remains
     # a separate control layer. Keeping USER -> ASSISTANT order makes the final
     # chat context alternate roles naturally when it follows the style example.
-    motivation = _motivation_defaults()
+    characters = connection.execute(
+        "SELECT id, name FROM characters ORDER BY id"
+    ).fetchall()
     connection.executemany(
-        "INSERT INTO motivation_styles(level, name, microdialogue) VALUES (?, ?, ?)",
+        """INSERT INTO motivation_styles
+           (character_id, level, name, microdialogue)
+           VALUES (?, ?, ?, ?)""",
         [
             (
+                int(character[0]),
                 level,
-                {-1: "антимотивация", 0: "нет воздействия", 1: "слабая", 2: "высокая"}[level],
+                _MOTIVATION_NAMES[level],
                 json.dumps(messages, ensure_ascii=False) if messages else None,
             )
-            for level, messages in motivation.items()
+            for character in characters
+            for level, messages in _motivation_defaults(str(character[1])).items()
         ],
     )
 
 
 def _ensure_motivation_rows(connection: sqlite3.Connection) -> None:
     """Ensure built-in rows exist and use a valid alternating chat-role order."""
-    names = {-1: "антимотивация", 0: "нет воздействия", 1: "слабая", 2: "высокая"}
-    for level, messages in _motivation_defaults().items():
-        payload = json.dumps(messages, ensure_ascii=False) if messages else None
-        row = connection.execute(
-            "SELECT microdialogue FROM motivation_styles WHERE level = ?", (level,)
-        ).fetchone()
-        if row is None:
-            connection.execute(
-                "INSERT INTO motivation_styles(level, name, microdialogue) VALUES (?, ?, ?)",
-                (level, names[level], payload),
-            )
-            continue
+    characters = connection.execute(
+        "SELECT id, name FROM characters ORDER BY id"
+    ).fetchall()
+    for character in characters:
+        character_id = int(character[0])
+        character_name = str(character[1])
+        for level, messages in _motivation_defaults(character_name).items():
+            payload = json.dumps(messages, ensure_ascii=False) if messages else None
+            row = connection.execute(
+                """SELECT microdialogue FROM motivation_styles
+                   WHERE character_id = ? AND level = ?""",
+                (character_id, level),
+            ).fetchone()
+            if row is None:
+                connection.execute(
+                    """INSERT INTO motivation_styles
+                       (character_id, level, name, microdialogue)
+                       VALUES (?, ?, ?, ?)""",
+                    (character_id, level, _MOTIVATION_NAMES[level], payload),
+                )
+                continue
 
-        # Preserve already well-formed custom USER -> ASSISTANT pairs. Repair
-        # only rows whose role order cannot be composed cleanly with the style
-        # microdialogue and the final real USER message.
-        should_repair = False
-        raw = row["microdialogue"]
-        if level == 0:
-            should_repair = bool(raw)
-        else:
-            try:
-                parsed = json.loads(raw) if raw else []
-                roles = [item.get("role") for item in parsed]
-                should_repair = roles != ["user", "assistant"]
-            except (TypeError, ValueError, json.JSONDecodeError):
-                should_repair = True
-        if should_repair:
-            connection.execute(
-                "UPDATE motivation_styles SET name = ?, microdialogue = ? WHERE level = ?",
-                (names[level], payload, level),
-            )
+            # Preserve already well-formed custom USER -> ASSISTANT pairs.
+            # Repair only rows whose role order cannot be composed cleanly
+            # with the style example and the final real USER message.
+            should_repair = False
+            raw = row["microdialogue"]
+            if level == 0:
+                should_repair = bool(raw)
+            else:
+                try:
+                    parsed = json.loads(raw) if raw else []
+                    roles = [item.get("role") for item in parsed]
+                    should_repair = roles != ["user", "assistant"]
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    should_repair = True
+            if should_repair:
+                connection.execute(
+                    """UPDATE motivation_styles
+                       SET name = ?, microdialogue = ?
+                       WHERE character_id = ? AND level = ?""",
+                    (_MOTIVATION_NAMES[level], payload, character_id, level),
+                )
+
+
+def _ensure_motivation_schema(connection: sqlite3.Connection) -> bool:
+    """Upgrade the old global-level table to character-specific rows.
+
+    The previous demo version keyed this table only by ``level``.  Such rows
+    cannot express a character's register, so they are kept under a legacy
+    name while the active table is rebuilt with ``(character_id, level)``.
+    Fresh databases use the new schema directly.
+    """
+    table = connection.execute(
+        """SELECT name FROM sqlite_master
+           WHERE type = 'table' AND name = 'motivation_styles'"""
+    ).fetchone()
+    if table is None:
+        connection.execute(
+            """CREATE TABLE motivation_styles (
+                character_id INTEGER NOT NULL REFERENCES characters(id),
+                level INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                microdialogue TEXT,
+                PRIMARY KEY(character_id, level)
+        )"""
+        )
+        return False
+
+    columns = {
+        str(row[1])
+        for row in connection.execute("PRAGMA table_info(motivation_styles)").fetchall()
+    }
+    if "character_id" in columns:
+        return False
+
+    connection.execute("ALTER TABLE motivation_styles RENAME TO motivation_styles_legacy")
+    connection.execute(
+        """CREATE TABLE motivation_styles (
+            character_id INTEGER NOT NULL REFERENCES characters(id),
+            level INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            microdialogue TEXT,
+            PRIMARY KEY(character_id, level)
+        )"""
+    )
+    return True
 
 
 def _create_database(db_path: Path) -> None:
@@ -678,9 +788,11 @@ def _create_database(db_path: Path) -> None:
                 PRIMARY KEY(character_id, emotion)
             );
             CREATE TABLE motivation_styles (
-                level INTEGER PRIMARY KEY,
+                character_id INTEGER NOT NULL REFERENCES characters(id),
+                level INTEGER NOT NULL,
                 name TEXT NOT NULL,
-                microdialogue TEXT
+                microdialogue TEXT,
+                PRIMARY KEY(character_id, level)
             );
             CREATE TABLE memory_entities (
                 id INTEGER PRIMARY KEY,
@@ -733,6 +845,21 @@ def _ensure_database_schema(db_path: Path) -> None:
         )
         _seed_character_weights(connection)
         _seed_memory_entities(connection)
+        motivation_schema_was_migrated = _ensure_motivation_schema(connection)
+        legacy_motivation_table = connection.execute(
+            """SELECT 1 FROM sqlite_master
+               WHERE type = 'table' AND name = 'motivation_styles_legacy'"""
+        ).fetchone()
+        if motivation_schema_was_migrated or legacy_motivation_table is not None:
+            # The previous built-in archive used level 1 for Iris.  The
+            # character-specific demo deliberately uses level 0 so the
+            # communication-only path is visible by default.  Preserve any
+            # non-legacy custom value in databases that already have the new
+            # schema.
+            connection.execute(
+                """UPDATE characters SET motivation_level = 0
+                   WHERE name = 'Ирис' AND motivation_level = 1"""
+            )
         _ensure_motivation_rows(connection)
 
         columns = {

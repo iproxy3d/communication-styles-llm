@@ -144,7 +144,9 @@ class StyleDemo:
             else motivation_level
         )
         motivation_microdialogue = (
-            self.repository.get_motivation_microdialogue(level) if use_style else []
+            self.repository.get_motivation_microdialogue(self.character.id, level)
+            if use_style
+            else []
         )
 
         model_messages = [
