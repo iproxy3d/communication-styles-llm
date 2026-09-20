@@ -9,8 +9,8 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from style_demo.association import EntityExtractor
-from style_demo.db import Repository, initialize_database
-from style_demo.emotion import EMOTIONS, vector
+from style_demo.db import CHARACTER_WEIGHT_PROFILES, Repository, initialize_database
+from style_demo.emotion import EMOTIONS, apply_character_weights, vector
 from style_demo.engine import StyleDemo
 from style_demo.local_llm import ContextEchoLLM
 
@@ -59,14 +59,31 @@ class DemoTests(unittest.TestCase):
     def test_character_weights_are_stored_separately_from_microdialogues(self) -> None:
         for character in self.repo.list_characters():
             self.assertEqual(set(character.character_weights), set(EMOTIONS))
-            self.assertTrue(
-                all(weight == 1.0 for weight in character.character_weights.values())
+            self.assertEqual(
+                character.character_weights,
+                CHARACTER_WEIGHT_PROFILES[character.name],
             )
         with sqlite3.connect(self.repo.path) as connection:
             table = connection.execute(
                 "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'character_weights'"
             ).fetchone()
         self.assertIsNotNone(table)
+
+    def test_character_weight_profiles_follow_the_documented_behaviors(self) -> None:
+        mira = self.repo.get_character("Мира").character_weights
+        alex = self.repo.get_character("Алекс").character_weights
+        iris = self.repo.get_character("Ирис").character_weights
+
+        self.assertGreater(mira["caring"], mira["anger"])
+        self.assertGreater(mira["optimism"], mira["disapproval"])
+        self.assertLess(alex["anger"], 1.0)
+        self.assertGreater(alex["neutral"], alex["amusement"])
+        self.assertGreater(iris["amusement"], iris["anger"])
+        self.assertGreater(iris["surprise"], iris["grief"])
+        for profile in CHARACTER_WEIGHT_PROFILES.values():
+            self.assertTrue(all(0.0 <= value <= 1.0 for value in profile.values()))
+        with self.assertRaises(ValueError):
+            apply_character_weights({"anger": 1.0}, {"anger": 1.01})
 
     def test_database_contains_microdialogues_for_all_28_emotions_and_styles(self) -> None:
         self.assertEqual(len(EMOTIONS), 28)
@@ -85,7 +102,9 @@ class DemoTests(unittest.TestCase):
                     self.assertTrue(dialogue[1]["content"])
 
     def test_emotion_selects_field_and_injects_microdialogues(self) -> None:
-        demo = self.make_demo("Мира", "anger")
+        # Iris keeps anger available at a restrained weight, so this test
+        # exercises the ordinary anger route without bypassing W_character.
+        demo = self.make_demo("Ирис", "anger")
         result = demo.respond(
             "Ты меня бесишь, я очень злюсь!",
             keep_history=False,
@@ -104,7 +123,7 @@ class DemoTests(unittest.TestCase):
                 (character.id,),
             )
             connection.execute(
-                "UPDATE character_weights SET weight = 1.5 WHERE character_id = ? AND emotion = 'fear'",
+                "UPDATE character_weights SET weight = 1.0 WHERE character_id = ? AND emotion = 'fear'",
                 (character.id,),
             )
             connection.commit()
@@ -124,7 +143,7 @@ class DemoTests(unittest.TestCase):
         self.assertEqual(result.trace.selected_emotion, "fear")
         self.assertAlmostEqual(
             result.trace.reaction_scores["fear"],
-            result.trace.communication_state["fear"] * 1.5,
+            result.trace.communication_state["fear"] * 1.0,
         )
         self.assertEqual(result.trace.reaction_scores["anger"], 0.0)
 

@@ -102,15 +102,16 @@ def apply_character_weights(
     """Apply the article's W_character elementwise to S_t.
 
     The weights belong to the character policy, not to the communication-style
-    microdialogue table. They are deliberately not clipped to [0, 1]: the
-    article allows weights that strengthen a coordinate (for example 1.5),
-    while zero makes that reaction unavailable.
+    microdialogue table. The demo uses the explicit character scale [0, 1]:
+    zero makes a reaction unavailable and one is its maximum contribution.
     """
     scores: dict[str, float] = {}
     for name in EMOTIONS:
         weight = float(character_weights.get(name, 1.0))
-        if weight < 0.0:
-            raise ValueError(f"character weight for {name!r} must be >= 0")
+        if not 0.0 <= weight <= 1.0:
+            raise ValueError(
+                f"character weight for {name!r} must be in [0, 1]"
+            )
         scores[name] = float(communication_state.get(name, 0.0)) * weight
     return scores
 

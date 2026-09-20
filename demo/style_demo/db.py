@@ -18,6 +18,131 @@ STYLE_ROWS = (
 )
 
 
+def _weight_profile(**overrides: float) -> dict[str, float]:
+    """Build a dense character policy vector in the Multi-Motions order.
+
+    ``1.0`` is the maximum contribution of a route. Values below one reduce
+    that route's contribution to the article's
+    ``argmax(S_t ⊙ W_character)`` selector. These are transparent demo
+    defaults inferred from the three written character descriptions, not
+    hidden model parameters.
+    """
+    unknown = set(overrides) - set(EMOTIONS)
+    if unknown:
+        raise ValueError(f"Unknown character-weight coordinates: {sorted(unknown)}")
+    invalid = {
+        emotion: value
+        for emotion, value in overrides.items()
+        if not 0.0 <= float(value) <= 1.0
+    }
+    if invalid:
+        raise ValueError(
+            f"Character weights must be in [0, 1]: {sorted(invalid.items())}"
+        )
+    return {
+        emotion: float(overrides.get(emotion, 1.0))
+        for emotion in EMOTIONS
+    }
+
+
+# The article specifies the W_character mechanism, but does not prescribe a
+# complete numeric vector for these three demo names. The following explicit
+# profiles make the prose descriptions observable in the selector while
+# leaving the article's formula unchanged.
+CHARACTER_WEIGHT_PROFILES = {
+    "Мира": _weight_profile(
+        admiration=1.00,
+        amusement=0.85,
+        anger=0.15,
+        annoyance=0.20,
+        approval=1.00,
+        caring=1.00,
+        confusion=1.00,
+        curiosity=0.95,
+        desire=0.85,
+        disappointment=0.75,
+        disapproval=0.25,
+        disgust=0.20,
+        embarrassment=0.85,
+        excitement=0.95,
+        fear=1.00,
+        gratitude=1.00,
+        grief=1.00,
+        joy=1.00,
+        love=1.00,
+        nervousness=1.00,
+        optimism=1.00,
+        pride=1.00,
+        realization=1.00,
+        relief=1.00,
+        remorse=1.00,
+        sadness=1.00,
+        surprise=0.95,
+        neutral=1.00,
+    ),
+    "Алекс": _weight_profile(
+        admiration=1.00,
+        amusement=0.45,
+        anger=0.25,
+        annoyance=0.30,
+        approval=1.00,
+        caring=0.85,
+        confusion=1.00,
+        curiosity=1.00,
+        desire=0.80,
+        disappointment=0.80,
+        disapproval=0.45,
+        disgust=0.25,
+        embarrassment=0.55,
+        excitement=0.70,
+        fear=0.85,
+        gratitude=0.90,
+        grief=0.75,
+        joy=0.80,
+        love=0.55,
+        nervousness=0.85,
+        optimism=1.00,
+        pride=0.95,
+        realization=1.00,
+        relief=1.00,
+        remorse=0.85,
+        sadness=0.75,
+        surprise=0.95,
+        neutral=1.00,
+    ),
+    "Ирис": _weight_profile(
+        admiration=1.00,
+        amusement=1.00,
+        anger=0.70,
+        annoyance=0.75,
+        approval=1.00,
+        caring=0.90,
+        confusion=1.00,
+        curiosity=1.00,
+        desire=0.90,
+        disappointment=0.90,
+        disapproval=0.75,
+        disgust=0.60,
+        embarrassment=0.35,
+        excitement=1.00,
+        fear=0.70,
+        gratitude=0.95,
+        grief=0.20,
+        joy=1.00,
+        love=0.85,
+        nervousness=0.65,
+        optimism=1.00,
+        pride=1.00,
+        realization=1.00,
+        relief=1.00,
+        remorse=0.45,
+        sadness=0.30,
+        surprise=1.00,
+        neutral=1.00,
+    ),
+}
+
+
 @dataclass(frozen=True)
 class Character:
     id: int
@@ -244,6 +369,11 @@ class Repository:
     def _character_weights(
         connection: sqlite3.Connection, character_id: int
     ) -> dict[str, float]:
+        character_row = connection.execute(
+            "SELECT name FROM characters WHERE id = ?", (character_id,)
+        ).fetchone()
+        character_name = str(character_row[0]) if character_row is not None else ""
+        defaults = CHARACTER_WEIGHT_PROFILES.get(character_name, _weight_profile())
         try:
             rows = connection.execute(
                 "SELECT emotion, weight FROM character_weights WHERE character_id = ?",
@@ -253,11 +383,17 @@ class Repository:
             if "no such table" not in str(error).lower():
                 raise
             rows = []
-        weights = {str(row["emotion"]): float(row["weight"]) for row in rows}
+        weights = {
+            str(row["emotion"]): max(0.0, min(1.0, float(row["weight"])))
+            for row in rows
+        }
         # initialize_database() fills every coordinate. The fallback keeps a
         # direct Repository read of an older database usable until migration is
         # run, without changing the article's W_character semantics.
-        return {emotion: weights.get(emotion, 1.0) for emotion in EMOTIONS}
+        return {
+            emotion: weights.get(emotion, defaults[emotion])
+            for emotion in EMOTIONS
+        }
 
     @staticmethod
     def _character(
@@ -275,7 +411,9 @@ class Repository:
             character_weights=(
                 character_weights
                 if character_weights is not None
-                else {emotion: 1.0 for emotion in EMOTIONS}
+                else CHARACTER_WEIGHT_PROFILES.get(
+                    str(row["name"]), _weight_profile()
+                )
             ),
         )
 
@@ -375,19 +513,66 @@ def _seed_characters(connection: sqlite3.Connection) -> None:
 
 
 def _seed_character_weights(connection: sqlite3.Connection) -> None:
-    """Seed a complete W_character table without overwriting custom weights."""
-    character_ids = [
-        int(row[0]) for row in connection.execute("SELECT id FROM characters")
-    ]
-    connection.executemany(
-        """INSERT OR IGNORE INTO character_weights(character_id, emotion, weight)
-           VALUES (?, ?, ?)""",
-        [
-            (character_id, emotion, 1.0)
-            for character_id in character_ids
-            for emotion in EMOTIONS
-        ],
-    )
+    """Seed character policies and migrate the former all-ones defaults.
+
+    A partially customized table is preserved. A table whose values are all
+    the old neutral ``1.0`` defaults is upgraded to the explicit demo profiles
+    above, so an existing archive database receives the same initialization as
+    a newly created one.
+    """
+    characters = connection.execute(
+        "SELECT id, name FROM characters ORDER BY id"
+    ).fetchall()
+    for row in characters:
+        character_id = int(row[0])
+        character_name = str(row[1])
+        profile = CHARACTER_WEIGHT_PROFILES.get(
+            character_name, _weight_profile()
+        )
+        existing_rows = connection.execute(
+            "SELECT emotion, weight FROM character_weights WHERE character_id = ?",
+            (character_id,),
+        ).fetchall()
+        existing = {str(item[0]): float(item[1]) for item in existing_rows}
+        had_out_of_range = False
+        for emotion, weight in existing.items():
+            bounded = max(0.0, min(1.0, weight))
+            if bounded != weight:
+                had_out_of_range = True
+                connection.execute(
+                    "UPDATE character_weights SET weight = ? "
+                    "WHERE character_id = ? AND emotion = ?",
+                    (bounded, character_id, emotion),
+                )
+                existing[emotion] = bounded
+
+        # Databases produced before character-specific initialization contain
+        # exactly the neutral vector. Migrate that legacy state once, while
+        # preserving any table that already contains a custom value.
+        if (
+            not had_out_of_range
+            and existing
+            and set(existing) == set(EMOTIONS)
+            and all(abs(weight - 1.0) <= 1e-12 for weight in existing.values())
+        ):
+            connection.executemany(
+                "UPDATE character_weights SET weight = ? "
+                "WHERE character_id = ? AND emotion = ?",
+                [
+                    (profile[emotion], character_id, emotion)
+                    for emotion in EMOTIONS
+                ],
+            )
+            continue
+
+        connection.executemany(
+            """INSERT OR IGNORE INTO character_weights(character_id, emotion, weight)
+               VALUES (?, ?, ?)""",
+            [
+                (character_id, emotion, profile[emotion])
+                for emotion in EMOTIONS
+            ],
+        )
 
 
 def _motivation_defaults() -> dict[int, list[dict[str, str]]]:
