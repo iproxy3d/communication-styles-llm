@@ -1,4 +1,5 @@
 import sys
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
@@ -55,6 +56,18 @@ class DemoTests(unittest.TestCase):
             ["Мира", "Алекс", "Ирис"],
         )
 
+    def test_character_weights_are_stored_separately_from_microdialogues(self) -> None:
+        for character in self.repo.list_characters():
+            self.assertEqual(set(character.character_weights), set(EMOTIONS))
+            self.assertTrue(
+                all(weight == 1.0 for weight in character.character_weights.values())
+            )
+        with sqlite3.connect(self.repo.path) as connection:
+            table = connection.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'character_weights'"
+            ).fetchone()
+        self.assertIsNotNone(table)
+
     def test_database_contains_microdialogues_for_all_28_emotions_and_styles(self) -> None:
         self.assertEqual(len(EMOTIONS), 28)
         for character in self.repo.list_characters():
@@ -82,6 +95,38 @@ class DemoTests(unittest.TestCase):
         self.assertTrue(result.trace.style_microdialogue)
         self.assertTrue(result.trace.motivation_microdialogue)
         self.assertTrue(result.trace.model_messages[-1]["content"].startswith("Ты меня"))
+
+    def test_character_weights_are_applied_before_emotion_selection(self) -> None:
+        character = self.repo.get_character("Мира")
+        with sqlite3.connect(self.repo.path) as connection:
+            connection.execute(
+                "UPDATE character_weights SET weight = 0 WHERE character_id = ?",
+                (character.id,),
+            )
+            connection.execute(
+                "UPDATE character_weights SET weight = 1.5 WHERE character_id = ? AND emotion = 'fear'",
+                (character.id,),
+            )
+            connection.commit()
+
+        character = self.repo.get_character("Мира")
+        result = StyleDemo(
+            self.repo,
+            ContextEchoLLM(),
+            FixedClassifier("fear"),
+            character,
+        ).respond(
+            "Я боюсь опоздать.",
+            use_memory=False,
+            keep_history=False,
+            learn_memory=False,
+        )
+        self.assertEqual(result.trace.selected_emotion, "fear")
+        self.assertAlmostEqual(
+            result.trace.reaction_scores["fear"],
+            result.trace.communication_state["fear"] * 1.5,
+        )
+        self.assertEqual(result.trace.reaction_scores["anger"], 0.0)
 
 
     def test_neutral_always_injects_character_style_microdialogue(self) -> None:
@@ -228,6 +273,53 @@ class DemoTests(unittest.TestCase):
             recalled.trace.communication_state["fear"],
             recalled.trace.base_communication_state["fear"],
         )
+
+    def test_associative_memory_uses_E_t_and_clamps_to_unit_interval(self) -> None:
+        character = self.repo.get_character("Мира")
+        demo = StyleDemo(
+            self.repo,
+            ContextEchoLLM(),
+            FixedClassifier("fear"),
+            character,
+            memory_eta=1.0,
+        )
+        first = demo.respond(
+            "Я боюсь самолета.",
+            keep_history=False,
+            learn_memory=True,
+        )
+        update = first.trace.memory_updates[0]
+        # On the first turn E_t is neutral; the strong current U_t/S_t must
+        # not be written directly into A(x).
+        self.assertEqual(update.after["fear"], 0.0)
+        self.assertGreater(update.after["neutral"], 0.0)
+
+        with sqlite3.connect(self.repo.path) as connection:
+            entity_id = connection.execute(
+                "SELECT id FROM memory_entities WHERE canonical = 'самолет'"
+            ).fetchone()[0]
+        bounded = self.repo.update_association(
+            character.id,
+            entity_id,
+            {"fear": 1.0, "anger": -2.0},
+            eta=1.0,
+        )
+        self.assertEqual(bounded.vector["fear"], 1.0)
+        self.assertEqual(bounded.vector["anger"], 0.0)
+        self.assertTrue(all(0.0 <= value <= 1.0 for value in bounded.vector.values()))
+
+        self.repo.decay_associations(character.id, gamma=0.5)
+        decayed = self.repo.get_association(character.id, entity_id)
+        self.assertIsNotNone(decayed)
+        self.assertEqual(decayed.vector["fear"], 0.5)
+
+        upper = self.repo.update_association(
+            character.id,
+            entity_id,
+            {"fear": 5.0},
+            eta=1.0,
+        )
+        self.assertEqual(upper.vector["fear"], 1.0)
 
     def test_compare_like_read_does_not_update_memory_when_learning_disabled(self) -> None:
         character = self.repo.get_character("Мира")

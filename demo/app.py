@@ -42,6 +42,7 @@ def print_result(character_name: str, result: Result, show_context: bool) -> Non
     print(f"S_base без памяти:              {vector_text(trace.base_communication_state)}")
     print(f"A_t, ассоциативная память:      {vector_text(trace.associative_state)}")
     print(f"S_t, состояние выбора стиля:    {vector_text(trace.communication_state)}")
+    print(f"R_t = S_t ⊙ W_character:        {vector_text(trace.reaction_scores)}")
 
     if trace.matched_entities:
         print("Найденные сущности:")
@@ -84,6 +85,7 @@ def make_demo(
     character_name: str,
     memory_beta: float,
     memory_eta: float,
+    memory_gamma: float,
 ) -> StyleDemo:
     return StyleDemo(
         repository,
@@ -92,6 +94,7 @@ def make_demo(
         repository.get_character(character_name),
         memory_beta=memory_beta,
         memory_eta=memory_eta,
+        memory_gamma=memory_gamma,
     )
 
 
@@ -103,11 +106,12 @@ def run_compare(
     show_context: bool,
     memory_beta: float,
     memory_eta: float,
+    memory_gamma: float,
 ) -> None:
-    # Comparison isolates the effect of the control microdialogues.  The
-    # baseline therefore uses a neutral system prompt instead of inheriting
-    # Mira's "supportive" wording, and associative memory is disabled for all
-    # branches so previously stored interactions cannot bias the comparison.
+    # This is a product-level comparison: baseline and the three named
+    # characters deliberately have different system prompts, alpha values,
+    # styles, character weights, and motivation levels. It is not a causal A/B
+    # test that changes only the presence of a microdialogue.
     baseline_character = replace(
         repository.get_character("Мира"),
         system_prompt=(
@@ -123,6 +127,7 @@ def run_compare(
         baseline_character,
         memory_beta=memory_beta,
         memory_eta=memory_eta,
+        memory_gamma=memory_gamma,
     ).respond(
         text,
         use_style=False,
@@ -139,6 +144,7 @@ def run_compare(
             character,
             memory_beta=memory_beta,
             memory_eta=memory_eta,
+            memory_gamma=memory_gamma,
         ).respond(
             text,
             use_memory=False,
@@ -157,8 +163,17 @@ def interactive(
     show_context: bool,
     memory_beta: float,
     memory_eta: float,
+    memory_gamma: float,
 ) -> None:
-    demo = make_demo(repository, model, classifier, character_name, memory_beta, memory_eta)
+    demo = make_demo(
+        repository,
+        model,
+        classifier,
+        character_name,
+        memory_beta,
+        memory_eta,
+        memory_gamma,
+    )
     print(f"Персонаж {demo.character.name}. Введите сообщение; /exit — завершить.")
     print("Ассоциативная память включена и сохраняется в db.sqlite3.")
     while True:
@@ -199,6 +214,7 @@ def run_memory_demo(
     show_context: bool,
     memory_beta: float,
     memory_eta: float,
+    memory_gamma: float,
 ) -> None:
     """Small reproducible scenario that makes the memory effect visible."""
     character = repository.get_character(character_name)
@@ -210,6 +226,7 @@ def run_memory_demo(
         character,
         memory_beta=memory_beta,
         memory_eta=memory_eta,
+        memory_gamma=memory_gamma,
     )
 
     training_turns = [
@@ -246,13 +263,18 @@ def main() -> None:
     parser.add_argument("--character", default="Мира", help="Мира, Алекс или Ирис")
     parser.add_argument("--message", help="одно сообщение; без него запускается диалог")
     parser.add_argument("--motivation", type=int, choices=(-1, 0, 1, 2))
-    parser.add_argument("--compare", action="store_true", help="сравнить ответ без стиля и трёх персонажей")
+    parser.add_argument(
+        "--compare",
+        action="store_true",
+        help="сравнить baseline и три полные конфигурации персонажей; это не чистый A/B-тест",
+    )
     parser.add_argument("--show-context", action="store_true", help="показать весь контекст для LLM")
     parser.add_argument("--show-memory", action="store_true", help="показать накопленные ассоциации персонажа и завершить")
     parser.add_argument("--reset-memory", action="store_true", help="очистить ассоциативную память выбранного персонажа")
     parser.add_argument("--memory-demo", action="store_true", help="запустить сценарий обучения эмоциональной ассоциации с самолетом и повторного упоминания")
     parser.add_argument("--memory-beta", type=float, default=0.35, help="beta: влияние A_t на S_t")
     parser.add_argument("--memory-eta", type=float, default=0.20, help="eta: скорость обновления A(entity)")
+    parser.add_argument("--memory-gamma", type=float, default=1.0, help="gamma: доля памяти, сохраняемая после обновления")
     parser.add_argument("--no-memory", action="store_true", help="отключить чтение и обучение ассоциативной памяти")
     parser.add_argument("--backend", choices=("local", "echo"), default="local", help="echo предназначен только для тестирования конвейера")
     args = parser.parse_args()
@@ -287,6 +309,7 @@ def main() -> None:
             args.show_context,
             args.memory_beta,
             args.memory_eta,
+            args.memory_gamma,
         )
     elif args.compare:
         run_compare(
@@ -297,6 +320,7 @@ def main() -> None:
             args.show_context,
             args.memory_beta,
             args.memory_eta,
+            args.memory_gamma,
         )
     elif args.message:
         demo = make_demo(
@@ -306,6 +330,7 @@ def main() -> None:
             args.character,
             args.memory_beta,
             args.memory_eta,
+            args.memory_gamma,
         )
         result = demo.respond(
             args.message,
@@ -327,6 +352,7 @@ def main() -> None:
             args.show_context,
             args.memory_beta,
             args.memory_eta,
+            args.memory_gamma,
         )
 
 

@@ -28,6 +28,7 @@ class Character:
     intensity: int
     motivation_level: int
     initial_state: dict[str, float]
+    character_weights: dict[str, float]
 
 
 @dataclass(frozen=True)
@@ -61,16 +62,21 @@ class Repository:
     def list_characters(self) -> list[Character]:
         with self.connect() as connection:
             rows = connection.execute("SELECT * FROM characters ORDER BY id").fetchall()
-        return [self._character(row) for row in rows]
+            return [
+                self._character(row, self._character_weights(connection, int(row["id"])))
+                for row in rows
+            ]
 
     def get_character(self, name: str) -> Character:
         with self.connect() as connection:
             row = connection.execute(
                 "SELECT * FROM characters WHERE lower(name) = lower(?)", (name,)
             ).fetchone()
-        if row is None:
-            raise KeyError(f"Unknown character: {name}")
-        return self._character(row)
+            if row is None:
+                raise KeyError(f"Unknown character: {name}")
+            return self._character(
+                row, self._character_weights(connection, int(row["id"]))
+            )
 
     def get_style_name(self, style_id: int) -> str:
         with self.connect() as connection:
@@ -151,13 +157,14 @@ class Repository:
             raise ValueError("eta must be in (0, 1]")
         current = self.get_association(character_id, entity_id)
         old = current.vector if current is not None else {name: 0.0 for name in STYLE_FIELDS}
-        updated = vector(
-            {
-                name: (1.0 - eta) * float(old.get(name, 0.0))
-                + eta * float(state.get(name, 0.0))
-                for name in STYLE_FIELDS
-            }
-        )
+        # Article formula: A_{t+1}(x) = A_t(x) + eta * (E_t - A_t(x)).
+        # The stored association is kept in the same bounded [0, 1] scale as E_t.
+        updated = {}
+        for name in STYLE_FIELDS:
+            ema = (1.0 - eta) * float(old.get(name, 0.0)) + eta * float(
+                state.get(name, 0.0)
+            )
+            updated[name] = max(0.0, min(1.0, ema))
         encounters = (current.encounters if current is not None else 0) + 1
         payload = json.dumps(updated, ensure_ascii=False)
         with self.connect() as connection:
@@ -171,6 +178,33 @@ class Repository:
             )
             connection.commit()
         return Association(character_id, entity_id, updated, encounters)
+
+    def decay_associations(self, character_id: int, gamma: float) -> None:
+        """Apply the article's separate global A <- gamma * A decay step."""
+        if not 0.0 < gamma <= 1.0:
+            raise ValueError("gamma must be in (0, 1]")
+        with self.connect() as connection:
+            rows = connection.execute(
+                """SELECT entity_id, vector FROM associative_memory
+                   WHERE character_id = ?""",
+                (character_id,),
+            ).fetchall()
+            for row in rows:
+                current = vector(json.loads(row["vector"]))
+                decayed = {
+                    name: max(0.0, min(1.0, gamma * float(current[name])))
+                    for name in STYLE_FIELDS
+                }
+                connection.execute(
+                    """UPDATE associative_memory SET vector = ?
+                       WHERE character_id = ? AND entity_id = ?""",
+                    (
+                        json.dumps(decayed, ensure_ascii=False),
+                        character_id,
+                        int(row["entity_id"]),
+                    ),
+                )
+            connection.commit()
 
     def list_associations(self, character_id: int) -> list[tuple[str, Association]]:
         with self.connect() as connection:
@@ -207,7 +241,28 @@ class Repository:
             connection.commit()
 
     @staticmethod
-    def _character(row: sqlite3.Row) -> Character:
+    def _character_weights(
+        connection: sqlite3.Connection, character_id: int
+    ) -> dict[str, float]:
+        try:
+            rows = connection.execute(
+                "SELECT emotion, weight FROM character_weights WHERE character_id = ?",
+                (character_id,),
+            ).fetchall()
+        except sqlite3.OperationalError as error:
+            if "no such table" not in str(error).lower():
+                raise
+            rows = []
+        weights = {str(row["emotion"]): float(row["weight"]) for row in rows}
+        # initialize_database() fills every coordinate. The fallback keeps a
+        # direct Repository read of an older database usable until migration is
+        # run, without changing the article's W_character semantics.
+        return {emotion: weights.get(emotion, 1.0) for emotion in EMOTIONS}
+
+    @staticmethod
+    def _character(
+        row: sqlite3.Row, character_weights: dict[str, float] | None = None
+    ) -> Character:
         return Character(
             id=int(row["id"]),
             name=str(row["name"]),
@@ -217,6 +272,11 @@ class Repository:
             intensity=int(row["intensity"]),
             motivation_level=int(row["motivation_level"]),
             initial_state=vector(json.loads(row["initial_state"])),
+            character_weights=(
+                character_weights
+                if character_weights is not None
+                else {emotion: 1.0 for emotion in EMOTIONS}
+            ),
         )
 
 
@@ -310,6 +370,22 @@ def _seed_characters(connection: sqlite3.Connection) -> None:
                 1,
                 neutral_state,
             ),
+        ],
+    )
+
+
+def _seed_character_weights(connection: sqlite3.Connection) -> None:
+    """Seed a complete W_character table without overwriting custom weights."""
+    character_ids = [
+        int(row[0]) for row in connection.execute("SELECT id FROM characters")
+    ]
+    connection.executemany(
+        """INSERT OR IGNORE INTO character_weights(character_id, emotion, weight)
+           VALUES (?, ?, ?)""",
+        [
+            (character_id, emotion, 1.0)
+            for character_id in character_ids
+            for emotion in EMOTIONS
         ],
     )
 
@@ -410,6 +486,12 @@ def _create_database(db_path: Path) -> None:
                 motivation_level INTEGER NOT NULL,
                 initial_state TEXT NOT NULL
             );
+            CREATE TABLE character_weights (
+                character_id INTEGER NOT NULL REFERENCES characters(id),
+                emotion TEXT NOT NULL,
+                weight REAL NOT NULL,
+                PRIMARY KEY(character_id, emotion)
+            );
             CREATE TABLE motivation_styles (
                 level INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -432,6 +514,7 @@ def _create_database(db_path: Path) -> None:
         for style_id, style_name in STYLE_ROWS:
             _insert_default_style(connection, style_id, style_name)
         _seed_characters(connection)
+        _seed_character_weights(connection)
         _seed_motivation(connection)
         _seed_memory_entities(connection)
         connection.commit()
@@ -455,8 +538,15 @@ def _ensure_database_schema(db_path: Path) -> None:
                 encounters INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY(character_id, entity_id)
             );
+            CREATE TABLE IF NOT EXISTS character_weights (
+                character_id INTEGER NOT NULL REFERENCES characters(id),
+                emotion TEXT NOT NULL,
+                weight REAL NOT NULL,
+                PRIMARY KEY(character_id, emotion)
+            );
             """
         )
+        _seed_character_weights(connection)
         _seed_memory_entities(connection)
         _ensure_motivation_rows(connection)
 

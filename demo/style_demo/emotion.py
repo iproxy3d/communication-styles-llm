@@ -76,10 +76,10 @@ def mix_state_with_memory(
 ) -> dict[str, float]:
     """Mix current user, agent and associative-memory signals on one scale.
 
-    U_t and E_t are in [0, 1].  A_t is an EMA of previous communication states,
-    also in [0, 1].  The additive memory term can push a coordinate above one,
-    so the educational demo clips the mixed vector back to [0, 1].  It does not
-    perform sum-normalization because the 28 emotion coordinates are independent
+    U_t and E_t are in [0, 1]. A_t is kept in the same bounded scale. The
+    additive memory term can push a coordinate above one, so the educational
+    demo clips the mixed vector back to [0, 1]. It does not perform
+    sum-normalization because the 28 emotion coordinates are independent
     sigmoid confidences rather than mutually exclusive class probabilities.
     """
     if not 0.0 <= alpha <= 1.0:
@@ -93,6 +93,26 @@ def mix_state_with_memory(
         for name in EMOTIONS
     }
     return vector(mixed)
+
+
+def apply_character_weights(
+    communication_state: Mapping[str, float],
+    character_weights: Mapping[str, float],
+) -> dict[str, float]:
+    """Apply the article's W_character elementwise to S_t.
+
+    The weights belong to the character policy, not to the communication-style
+    microdialogue table. They are deliberately not clipped to [0, 1]: the
+    article allows weights that strengthen a coordinate (for example 1.5),
+    while zero makes that reaction unavailable.
+    """
+    scores: dict[str, float] = {}
+    for name in EMOTIONS:
+        weight = float(character_weights.get(name, 1.0))
+        if weight < 0.0:
+            raise ValueError(f"character weight for {name!r} must be >= 0")
+        scores[name] = float(communication_state.get(name, 0.0)) * weight
+    return scores
 
 
 def update_toy_agent_state(
