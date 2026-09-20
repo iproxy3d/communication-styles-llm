@@ -315,8 +315,8 @@ def _seed_characters(connection: sqlite3.Connection) -> None:
 
 
 def _seed_motivation(connection: sqlite3.Connection) -> None:
-    # Kept compatible with the previous demo; motivation is orthogonal to the
-    # emotion-classifier upgrade in this version.
+    # Motivation is orthogonal to the emotion-classifier output and remains
+    # a separate control layer.
     motivation = {
         -1: [
             message("assistant", "Не хочу развивать этот разговор."),
@@ -392,8 +392,8 @@ def _create_database(db_path: Path) -> None:
         connection.commit()
 
 
-def _upgrade_existing_database(db_path: Path) -> None:
-    """Upgrade the v1 five-emotion demo without requiring a manual DB delete."""
+def _ensure_database_schema(db_path: Path) -> None:
+    """Ensure that an existing SQLite file has the complete current schema."""
     with closing(sqlite3.connect(db_path)) as connection:
         connection.row_factory = sqlite3.Row
         connection.executescript(
@@ -419,7 +419,7 @@ def _upgrade_existing_database(db_path: Path) -> None:
             for row in connection.execute("PRAGMA table_info(communication_styles)").fetchall()
         }
         missing = [emotion for emotion in STYLE_FIELDS if emotion not in columns]
-        upgrading_from_v1 = bool(missing)
+        schema_was_incomplete = bool(missing)
         for emotion in missing:
             connection.execute(
                 f'ALTER TABLE communication_styles ADD COLUMN "{emotion}" TEXT'
@@ -436,13 +436,12 @@ def _upgrade_existing_database(db_path: Path) -> None:
                 "UPDATE communication_styles SET name = ?, description = ? WHERE id = ?",
                 (style_name, STYLE_DESCRIPTIONS[style_name], style_id),
             )
-            # A v1 -> v2 migration replaces the old five-emotion seed as well,
-            # because neutral was empty and low-intensity entries were not full
-            # USER -> ASSISTANT microdialogues.  Once upgraded, custom edits are
-            # left untouched on subsequent starts.
+            # If required emotion columns had to be added, seed the complete
+            # built-in style table consistently. For an already complete schema,
+            # existing custom cell contents are left untouched.
             for emotion in STYLE_FIELDS:
                 payload = encode_levels(build_default_style_levels(style_name, emotion))
-                if upgrading_from_v1:
+                if schema_was_incomplete:
                     connection.execute(
                         f'UPDATE communication_styles SET "{emotion}" = ? WHERE id = ?',
                         (payload, style_id),
@@ -454,10 +453,10 @@ def _upgrade_existing_database(db_path: Path) -> None:
                         (payload, style_id),
                     )
 
-        # Expand old 5-D initial and memory vectors to the full classifier space.
+        # Ensure stored initial and memory vectors cover the full classifier space.
         for row in connection.execute("SELECT id, initial_state FROM characters").fetchall():
             state = vector(json.loads(row["initial_state"]))
-            if upgrading_from_v1:
+            if schema_was_incomplete:
                 state = _initial_state()
             connection.execute(
                 "UPDATE characters SET initial_state = ? WHERE id = ?",
@@ -486,4 +485,4 @@ def initialize_database(path: str | Path, force: bool = False) -> None:
     if not db_path.exists():
         _create_database(db_path)
     else:
-        _upgrade_existing_database(db_path)
+        _ensure_database_schema(db_path)

@@ -260,10 +260,9 @@ STYLE_DESCRIPTIONS = {
 def build_default_style_levels(style_name: str, emotion: str) -> dict[str, list[dict[str, str]]]:
     """Return three USER -> ASSISTANT microdialogues for one style/emotion.
 
-    The old demo already used three intensity levels.  Version 2 keeps that
-    idea but standardizes every level as a complete USER -> ASSISTANT pair, so
-    each injected block is a self-contained microdialogue rather than a single
-    assistant phrase.
+    Every emotion uses three intensity levels. Each level is represented as
+    a complete USER -> ASSISTANT pair, so every injected block is a
+    self-contained microdialogue rather than a single assistant phrase.
     """
     if emotion not in EMOTIONS:
         raise KeyError(f"Unsupported emotion: {emotion}")

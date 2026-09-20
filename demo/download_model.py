@@ -27,7 +27,7 @@ def download(repo_id: str, target: Path) -> None:
         ignore_patterns=(
             "*.md",
             "*.html",
-            "*.bin",  # both releases provide safetensors
+            "*.bin",  # both models provide safetensors
             "docs/*",
             "examples/*",
             "training_*",
